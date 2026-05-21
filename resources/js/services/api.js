@@ -7,22 +7,18 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    // Преобразуем параметры перед отправкой
     paramsSerializer: (params) => {
         const convertedParams = {};
 
         Object.keys(params).forEach(key => {
             const value = params[key];
 
-            // Преобразуем boolean в строку 'true'/'false' (так работает Laravel)
             if (typeof value === 'boolean') {
                 convertedParams[key] = value ? 'true' : 'false';
             }
-            // Массивы обрабатываем как есть
             else if (Array.isArray(value)) {
                 convertedParams[key] = value;
             }
-            // null/undefined пропускаем
             else if (value !== null && value !== undefined) {
                 convertedParams[key] = value;
             }
@@ -32,7 +28,6 @@ const api = axios.create({
     }
 });
 
-// Добавляем CSRF токен
 api.interceptors.request.use((config) => {
     const token = document.querySelector('meta[name="csrf-token"]')?.content;
     if (token) {
@@ -41,7 +36,6 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Перехват ошибок
 api.interceptors.response.use(
     (response) => response.data,
     (error) => {
@@ -50,7 +44,6 @@ api.interceptors.response.use(
     }
 );
 
-// API методы
 export const AgentAPI = {
     getAll: () => api.get('/agents'),
     getById: (id) => api.get(`/agents/${id}`),
