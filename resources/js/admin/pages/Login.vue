@@ -21,7 +21,7 @@
                     <label>Email</label>
                     <input
                         type="email"
-                        v-model="email"
+                        v-model="form.email"
                         placeholder="admin@business-robotics.ru"
                         required
                     />
@@ -32,7 +32,7 @@
                     <div class="br-admin-password-wrapper">
                         <input
                             :type="showPassword ? 'text' : 'password'"
-                            v-model="password"
+                            v-model="form.password"
                             placeholder="••••••••"
                             required
                         />
@@ -62,28 +62,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAdminAuthStore } from '../stores/authStore';
 
 const router = useRouter();
 const authStore = useAdminAuthStore();
-const email = ref('');
-const password = ref('');
 const loading = ref(false);
 const error = ref('');
 const showPassword = ref(false);
 
+const form = reactive({
+    email: '',
+    password: ''
+});
+
 const handleLogin = async () => {
+    if (!form.email || !form.password) {
+        error.value = 'Заполните все поля';
+        return;
+    }
+
     loading.value = true;
     error.value = '';
 
-    const result = await authStore.login(email.value, password.value);
+    const result = await authStore.login(form.email, form.password);
 
     if (result.success) {
         router.push('/admin/dashboard');
     } else {
         error.value = result.error || 'Неверный email или пароль';
+        form.password = '';
     }
 
     loading.value = false;
@@ -92,34 +101,33 @@ const handleLogin = async () => {
 
 <style scoped>
 .br-admin-login {
-    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0D1E30;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0D1E30;
-    padding: 20px;
-    position: relative;
-}
-
-.br-admin-login::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, rgba(0, 207, 255, 0.15), transparent);
-    pointer-events: none;
+    margin: 0;
+    padding: 0;
 }
 
 .br-admin-login-container {
-    background: rgba(33, 51, 73, 0.9);
-    backdrop-filter: blur(10px);
-    border-radius: 24px;
-    padding: 48px;
     width: 100%;
     max-width: 440px;
+    margin: 0 auto;
+    padding: 48px 40px;
+    background: rgba(33, 51, 73, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
     border: 1px solid rgba(0, 207, 255, 0.25);
-    box-shadow: 0 0 0 1px rgba(0, 207, 255, 0.12), 0 32px 80px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
 }
 
+/* ЛОГО - СТРОГО ПО ЦЕНТРУ */
 .br-admin-login-header {
     text-align: center;
     margin-bottom: 40px;
@@ -132,6 +140,14 @@ const handleLogin = async () => {
     gap: 16px;
 }
 
+.br-admin-login-logo svg {
+    flex-shrink: 0;
+}
+
+.br-admin-login-logo div {
+    text-align: left;
+}
+
 .br-admin-login-logo h1 {
     font-size: 24px;
     font-weight: 700;
@@ -140,6 +156,7 @@ const handleLogin = async () => {
     background-clip: text;
     color: transparent;
     margin: 0;
+    line-height: 1.3;
 }
 
 .br-admin-login-logo p {
@@ -153,6 +170,11 @@ const handleLogin = async () => {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: 100%;
+}
+
+.br-admin-form-group {
+    width: 100%;
 }
 
 .br-admin-form-group label {
@@ -173,6 +195,7 @@ const handleLogin = async () => {
     font-size: 14px;
     color: #E8F0F8;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .br-admin-form-group input:focus {
@@ -187,6 +210,7 @@ const handleLogin = async () => {
 
 .br-admin-password-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .br-admin-password-wrapper input {
@@ -204,6 +228,9 @@ const handleLogin = async () => {
     padding: 0;
     color: #5A7A95;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .br-admin-toggle-password:hover {
@@ -211,6 +238,7 @@ const handleLogin = async () => {
 }
 
 .br-admin-login-btn {
+    width: 100%;
     background: linear-gradient(135deg, #00CFFF, #0090CC);
     color: #07101D;
     border: none;
@@ -221,6 +249,7 @@ const handleLogin = async () => {
     cursor: pointer;
     transition: all 0.2s;
     margin-top: 8px;
+    text-align: center;
 }
 
 .br-admin-login-btn:hover:not(:disabled) {
@@ -241,5 +270,14 @@ const handleLogin = async () => {
     border-radius: 12px;
     font-size: 14px;
     text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .br-admin-login-container {
+        margin: 16px;
+        padding: 32px 24px;
+    }
 }
 </style>

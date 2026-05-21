@@ -3,6 +3,7 @@ import { createPinia } from 'pinia';
 import { createRouter, createWebHistory } from 'vue-router';
 
 import '../css/app.css';
+import '../css/admin.css';
 
 import App from './App.vue';
 
