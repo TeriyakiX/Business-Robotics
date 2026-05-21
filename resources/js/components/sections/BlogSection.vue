@@ -20,7 +20,7 @@
                     @click="openArticleModal(article)"
                 >
                     <img
-                        :src="article.cover_url || '/images/placeholder.jpg'"
+                        :src="article.cover_url"
                         :alt="article.title"
                         class="blog-card-img"
                         loading="lazy"
@@ -89,7 +89,7 @@
 
                     <div v-else-if="selectedArticle" class="blog-modal-content">
                         <img
-                            :src="selectedArticle.cover_url || '/images/placeholder.jpg'"
+                            :src="selectedArticle.cover_url"
                             :alt="selectedArticle.title"
                             class="blog-modal-cover"
                         >
