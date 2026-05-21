@@ -12,7 +12,6 @@
                 <p class="section-sub" style="color: #4E6E88;">Приводите клиентов — мы закрываем всё остальное. Получайте % с каждой сделки без вложений.</p>
             </div>
 
-            <!-- Варианты заработка -->
             <div class="partners-grid">
                 <!-- Вариант 1: Разработка -->
                 <div class="partner-card partner-card-dev">
@@ -43,7 +42,6 @@
                     </div>
                 </div>
 
-                <!-- Вариант 2: Подписка -->
                 <div class="partner-card partner-card-sub">
                     <div class="partner-glow" style="background: radial-gradient(circle at top right, rgba(167,139,250,0.08), transparent 70%);"></div>
                     <div class="partner-badge" style="background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.25); color: #7C3AED;">
@@ -74,7 +72,6 @@
                 </div>
             </div>
 
-            <!-- Потенциальный доход -->
             <div class="partner-earn-card">
                 <div class="partner-earn-row">
                     <div class="partner-earn-item">
@@ -97,7 +94,6 @@
                 </div>
             </div>
 
-            <!-- Как это работает -->
             <div class="partner-how-grid">
                 <div>
                     <h3 class="partner-how-title">Как работает программа</h3>
@@ -160,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- CTA партнёра -->
             <div class="partner-cta">
                 <p class="partner-cta-label">Станьте партнёром</p>
                 <h3 class="partner-cta-title">Готовы начать зарабатывать?</h3>

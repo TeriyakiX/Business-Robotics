@@ -124,7 +124,6 @@ const handleSubmit = async () => {
         console.log('Заявка отправлена:', response);
         submitted.value = true;
 
-        // Автоматически закрываем через 2 секунды
         setTimeout(() => {
             close();
         }, 2000);

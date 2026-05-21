@@ -38,7 +38,6 @@ defineProps({
     }
 });
 
-// Фильтр для форматирования числа с ведущим нулём
 const formatNumber = (num) => {
     return num.toString().padStart(2, '0');
 };

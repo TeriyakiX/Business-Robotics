@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-// No props needed for footer
+
 </script>
 
 <style scoped>

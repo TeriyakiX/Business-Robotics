@@ -1,4 +1,3 @@
-// Убираем createRouter отсюда
 const routes = [
     {
         path: '/',
@@ -17,5 +16,4 @@ const routes = [
     },
 ];
 
-// Экспортируем ТОЛЬКО массив
 export default routes;

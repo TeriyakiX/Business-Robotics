@@ -72,7 +72,6 @@
             </div>
         </div>
 
-        <!-- Модальное окно статьи -->
         <Teleport to="body">
             <div v-if="modalOpen" class="blog-modal-overlay" @click="closeModal">
                 <div class="blog-modal-container" @click.stop>
@@ -172,11 +171,9 @@ const openArticleModal = async (article) => {
     modalLoading.value = true;
 
     try {
-        // Если у нас уже есть полный контент в статье, используем его
         if (article.content) {
             selectedArticle.value = article;
         } else {
-            // Иначе загружаем полную статью по slug
             const response = await ArticleAPI.getBySlug(article.slug);
             selectedArticle.value = response.data || response;
         }

@@ -15,14 +15,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
-    // ========== АДМИНСКАЯ АВТОРИЗАЦИЯ ==========
     Route::prefix('admin')->group(function () {
         Route::post('/login', [AdminAuthController::class, 'login']);
         Route::post('/logout', [AdminAuthController::class, 'logout'])->middleware('auth:sanctum');
         Route::get('/me', [AdminAuthController::class, 'me'])->middleware('auth:sanctum');
     });
 
-    // ========== ПУБЛИЧНЫЕ МАРШРУТЫ ==========
     Route::get('agents', [AgentController::class, 'list']);
     Route::get('agents/{id}', [AgentController::class, 'item']);
 
@@ -33,7 +31,6 @@ Route::prefix('v1')->group(function () {
     Route::get('articles/{id}', [ArticleController::class, 'item']);
     Route::get('articles/slug/{slug}', [ArticleController::class, 'show']);
 
-    // Partner (публичные)
     Route::get('partner/variants', [PartnerVariantController::class, 'index']);
     Route::get('partner/steps', [PartnerStepController::class, 'index']);
     Route::get('partner/benefits', [PartnerBenefitController::class, 'index']);
@@ -43,7 +40,6 @@ Route::prefix('v1')->group(function () {
 
     Route::post('contact', [ContactController::class, 'create']);
 
-    // ========== АДМИНСКИЕ CRUD МАРШРУТЫ ==========
     Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
 
         // Agents CRUD
@@ -70,7 +66,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('/articles/{id}', [ArticleController::class, 'delete']);
         Route::post('/articles/{id}/restore', [ArticleController::class, 'restore']);
 
-        // Contacts CRUD (админские)
+        // Contacts CRUD
         Route::get('/contacts', [ContactController::class, 'list']);
         Route::get('/contacts/{id}', [ContactController::class, 'item']);
         Route::put('/contacts/{id}/status', [ContactController::class, 'updateStatus']);

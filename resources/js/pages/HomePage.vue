@@ -44,7 +44,6 @@ import CtaSection from '@/components/sections/CtaSection.vue';
 import ContactModal from '@/components/modals/ContactModal.vue';
 import { AgentAPI, CaseAPI, ArticleAPI, PartnerAPI, ProcessStepAPI, MarqueeAPI } from '@/services/api';
 
-// Состояния
 const agents = ref([]);
 const cases = ref([]);
 const articles = ref([]);
@@ -63,7 +62,6 @@ const openContactModal = () => {
 const loadData = async () => {
     loading.value = true;
     try {
-        // Временно убираем параметры для теста
         const [
             agentsRes,
             casesRes,
@@ -75,8 +73,8 @@ const loadData = async () => {
             benefitsRes
         ] = await Promise.all([
             AgentAPI.getAll().catch(e => ({ data: [] })),
-            CaseAPI.getAll().catch(e => ({ data: [] })),        // без параметров
-            ArticleAPI.getAll().catch(e => ({ data: [] })),     // без параметров
+            CaseAPI.getAll().catch(e => ({ data: [] })),
+            ArticleAPI.getAll().catch(e => ({ data: [] })),
             ProcessStepAPI.getAll().catch(e => ({ data: [] })),
             MarqueeAPI.getAll().catch(e => ({ data: [] })),
             PartnerAPI.getVariants().catch(e => ({ data: [] })),
