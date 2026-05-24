@@ -1,35 +1,31 @@
 <template>
     <section class="cta-section">
         <div class="container">
-            <div class="cta-box">
+            <div class="cta-box" id="cta-box">
                 <div class="cta-glow-top"></div>
                 <div class="cta-glow-bot"></div>
                 <div class="cta-content">
                     <div class="section-pill dark">
                         <span class="dot" style="background: #00CFFF;"></span>
-                        Начните сегодня
+                        {{ ctaData.cta_pill || 'Начните сегодня' }}
                     </div>
-                    <h2 class="cta-title">
-                        Автоматизируйте<br><span class="glow-text">свой бизнес</span>
-                    </h2>
-                    <p class="cta-subtitle">
-                        Получите бесплатную демонстрацию и расчёт ROI. Без обязательств — просто увидите результат.
-                    </p>
+                    <h2 class="cta-title" v-html="ctaTitle"></h2>
+                    <p class="cta-subtitle">{{ ctaData.cta_subtitle || 'Получите бесплатную демонстрацию и расчёт ROI. Без обязательств — просто увидите результат.' }}</p>
                     <div class="cta-buttons">
-                        <button
-                            @click="$emit('open-contact')"
-                            class="btn-cyan"
-                        >
-                            Получить бесплатное демо
+                        <button @click="$emit('open-contact')" class="btn-cyan">
+                            {{ ctaData.cta_button_text || 'Получить бесплатное демо' }}
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M5 12h14m-7-7 7 7-7 7"/>
                             </svg>
                         </button>
-                        <button class="btn-ghost">
-                            Написать в Telegram
-                        </button>
+                        <a :href="telegramUrl" target="_blank" rel="noopener noreferrer" class="btn-ghost">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                            {{ ctaData.cta_button_telegram || 'Написать в Telegram' }}
+                        </a>
                     </div>
-                    <p class="cta-note">Ответим в течение 2 часов в рабочее время</p>
+                    <p class="cta-note">{{ ctaData.cta_note || 'Ответим в течение 2 часов в рабочее время' }}</p>
                 </div>
             </div>
         </div>
@@ -37,7 +33,29 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
+
 defineEmits(['open-contact']);
+
+const settingsStore = useSettingsStore();
+
+// Получаем данные CTA из хранилища
+const ctaData = computed(() => settingsStore.cta || {});
+
+const ctaTitle = computed(() => {
+    const title = ctaData.value.cta_title || 'Автоматизируйте свой бизнес';
+    // Если в заголовке есть HTML-теги, рендерим как есть
+    if (title.includes('<br>') || title.includes('<span')) {
+        return title;
+    }
+    // Иначе разбиваем на две строки
+    return title.replace(/\n/g, '<br>');
+});
+
+const telegramUrl = computed(() => {
+    return settingsStore.getTelegramUrl?.() || settingsStore.footer?.footer_telegram || 'https://t.me/bizroboticsbot';
+});
 </script>
 
 <style scoped>
@@ -182,7 +200,7 @@ defineEmits(['open-contact']);
 .btn-ghost {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     padding: 16px 36px;
     font-size: 16px;
     font-weight: 500;
@@ -192,6 +210,11 @@ defineEmits(['open-contact']);
     color: #E8F0F8;
     border: 1px solid rgba(0, 180, 230, 0.22);
     transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-ghost svg {
+    flex-shrink: 0;
 }
 
 .btn-ghost:hover {

@@ -71,9 +71,9 @@ final class ArticleUpdateRequest extends FormRequest
             'published_at' => ['nullable', 'date'],
             'is_published' => ['nullable', 'boolean'],
             'increment_views' => ['nullable', 'boolean'],
-            'cover' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'cover' => ['nullable', 'file','mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
+            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
             'gallery' => ['nullable', 'array', 'max:10'],
-            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'delete_cover' => ['nullable', 'boolean'],
         ];
     }

@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { ArticleAPI } from '@/services/api';
@@ -153,17 +153,30 @@ const showAll = ref(false);
 const modalOpen = ref(false);
 const modalLoading = ref(false);
 const selectedArticle = ref(null);
+const isMobile = ref(false);
+
+// Количество статей в зависимости от устройства
+const initialLimit = computed(() => isMobile.value ? 3 : 6);
 
 const displayArticles = computed(() => {
     if (showAll.value) return props.articles;
-    return props.articles.slice(0, 6);
+    return props.articles.slice(0, initialLimit.value);
 });
 
-const hasMoreArticles = computed(() => props.articles.length > 6);
+const hasMoreArticles = computed(() => props.articles.length > initialLimit.value);
 
 const formatDate = (date) => {
     if (!date) return '';
     return dayjs(date).format('D MMM YYYY');
+};
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth < 768;
+    // Если показываем все статьи, не сбрасываем
+    if (!showAll.value) {
+        // Триггерим пересчет displayArticles через обновление
+        // Ничего не делаем, computed сам пересчитается
+    }
 };
 
 const openArticleModal = async (article) => {
@@ -190,6 +203,15 @@ const closeModal = () => {
     selectedArticle.value = null;
     modalLoading.value = false;
 };
+
+onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+});
 </script>
 
 <style scoped>
@@ -623,6 +645,7 @@ const closeModal = () => {
 
     .blog-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .blog-card-content {

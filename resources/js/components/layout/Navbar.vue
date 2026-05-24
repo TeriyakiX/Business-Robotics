@@ -2,73 +2,79 @@
     <nav
         id="navbar"
         class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        :class="{ 'scrolled': isScrolled }"
+        :class="{ scrolled: isScrolled }"
     >
         <div class="nav-inner max-w-7xl mx-auto px-6 flex items-center justify-between h-16 md:h-[68px]">
+
             <!-- Logo -->
             <div class="nav-logo flex items-center gap-3 flex-shrink-0">
                 <img
-                    src="../../../../public/logo.png"
+                    :src="logoUrl"
                     alt="Business Robotics"
                     class="h-12 md:h-14 w-auto object-contain"
-                    @error="e => e.target.style.display = 'none'"
+                    @error="handleLogoError"
                 >
-                <span class="nav-brand text-white font-semibold text-sm md:text-base">Business Robotics</span>
+                <span class="nav-brand text-white font-semibold text-sm md:text-base">
+                    Business Robotics
+                </span>
             </div>
 
-            <!-- Desktop Navigation Pill -->
+            <!-- Desktop Navigation -->
             <div class="nav-pill hidden md:flex items-center gap-1 border border-white/20 rounded-full p-1">
                 <a
                     v-for="item in navItems"
-                    :key="item.href"
-                    :href="item.href"
-                    class="px-4 py-2 text-sm rounded-full text-white/80 hover:bg-white/15 hover:text-white transition-all duration-200"
-                    :class="{ 'active bg-white/15 text-white': isActive(item.href) }"
+                    :key="item.label"
+                    href="#"
+                    @click.prevent="handleNavClick(item)"
+                    class="px-4 py-2 text-sm rounded-full text-white/80 hover:bg-white/15 hover:text-white transition-all"
                 >
                     {{ item.label }}
                 </a>
             </div>
 
-            <!-- Desktop CTA -->
+            <!-- Actions -->
             <div class="flex items-center gap-3">
+
                 <button
                     @click="handleContactClick"
-                    class="btn-try hidden md:inline-flex bg-white text-[#07101D] px-5 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-all duration-200"
+                    class="btn-try hidden md:inline-flex bg-white text-[#07101D] px-5 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition"
                 >
                     Попробовать
                 </button>
 
-                <!-- Mobile Menu Button -->
+                <!-- Мобильное меню - показываем только на мобилках -->
                 <button
+                    v-if="isMobile"
                     @click="toggleMobileMenu"
-                    class="hamburger md:hidden flex flex-col gap-1.5 p-2 bg-transparent border-none cursor-pointer"
+                    class="hamburger md:hidden flex flex-col gap-1.5 p-2"
                     aria-label="Меню"
                 >
-                    <span class="ham-line block w-5 h-0.5 bg-white rounded-full transition-all duration-300" :class="{ 'rotate-45 translate-y-2': mobileMenuOpen }"></span>
-                    <span class="ham-line block w-5 h-0.5 bg-white rounded-full transition-all duration-300" :class="{ 'opacity-0': mobileMenuOpen }"></span>
-                    <span class="ham-line block w-5 h-0.5 bg-white rounded-full transition-all duration-300" :class="{ '-rotate-45 -translate-y-2': mobileMenuOpen }"></span>
+                    <span class="ham-line" :class="{ 'rotate-45 translate-y-2': mobileMenuOpen }"></span>
+                    <span class="ham-line" :class="{ 'opacity-0': mobileMenuOpen }"></span>
+                    <span class="ham-line" :class="{ '-rotate-45 -translate-y-2': mobileMenuOpen }"></span>
                 </button>
+
             </div>
         </div>
 
-        <!-- Mobile Menu -->
+        <!-- Mobile menu - только для мобилок -->
         <div
-            v-show="mobileMenuOpen"
-            id="mobile-menu"
-            class="fixed inset-x-0 top-16 bottom-0 z-40 bg-[#0D1E30]/98 backdrop-blur-xl md:hidden flex flex-col"
+            v-if="isMobile && mobileMenuOpen"
+            class="mobile-menu fixed inset-x-0 top-16 bottom-0 z-40 bg-[#0D1E30]/98 backdrop-blur-xl md:hidden flex flex-col"
         >
             <div class="flex flex-col p-6">
+
                 <a
                     v-for="item in navItems"
-                    :key="item.href"
-                    :href="item.href"
-                    class="mob-link block py-4 text-xl font-semibold text-white border-b border-white/10"
-                    @click="closeMobileMenu"
+                    :key="item.label"
+                    href="#"
+                    @click.prevent="handleNavClick(item)"
+                    class="block py-4 text-xl font-semibold text-white border-b border-white/10"
                 >
                     {{ item.label }}
                 </a>
+
                 <div class="mt-6 flex flex-col gap-3">
-                    <a href="#" class="text-center text-white/80 py-3 rounded-xl border border-white/15 text-sm">Войти</a>
                     <button
                         @click="handleContactClick"
                         class="bg-white text-[#07101D] py-3 rounded-xl text-sm font-medium"
@@ -76,30 +82,41 @@
                         Попробовать бесплатно
                     </button>
                 </div>
+
             </div>
         </div>
     </nav>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const emit = defineEmits(['open-contact']);
 
 const navItems = [
-    { label: 'Агенты', href: '#agents' },
-    { label: 'Процесс', href: '#process' },
-    { label: 'Кейсы', href: '#cases' },
-    { label: 'Блог', href: '#blog' },
-    { label: 'Партнёрам', href: '#partners' },
-    { label: 'Контакты', href: '#footer' },
+    { label: 'Агенты', target: '#agents' },
+    { label: 'Процесс', target: '#process' },
+    { label: 'Кейсы', target: '#cases' },
+    { label: 'Блог', target: '#blog' },
+    { label: 'Партнёрам', target: '#partners' },
+    { label: 'Контакты', target: '#footer' },
 ];
 
 const isScrolled = ref(false);
 const mobileMenuOpen = ref(false);
+const isMobile = ref(false);
+const logoUrl = ref('/logo.png');
+
+const handleLogoError = () => {
+    logoUrl.value = '/images/logo.png';
+};
 
 const handleScroll = () => {
     isScrolled.value = window.scrollY > 50;
+};
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth < 768;
 };
 
 const toggleMobileMenu = () => {
@@ -112,30 +129,32 @@ const closeMobileMenu = () => {
     document.body.style.overflow = '';
 };
 
+const handleNavClick = (item) => {
+    const element = document.querySelector(item.target);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    closeMobileMenu();
+};
+
 const handleContactClick = () => {
     closeMobileMenu();
     emit('open-contact');
 };
 
-const isActive = (href) => {
-    if (typeof window !== 'undefined') {
-        if (href === '#agents' && window.location.hash === '#agents') return true;
-        if (href === '#cases' && window.location.hash === '#cases') return true;
-    }
-    return false;
-};
-
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
 });
 
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('resize', checkMobile);
 });
 </script>
 
 <style scoped>
-/* ========== NAVBAR STYLES ========== */
 .nav-inner {
     max-width: 1280px;
     margin: 0 auto;
@@ -148,71 +167,27 @@ onUnmounted(() => {
     border-bottom: 1px solid rgba(0, 180, 230, 0.12);
 }
 
-.nav-logo img {
-    height: 56px;
-    width: auto;
-    object-fit: contain;
-}
-
-.nav-brand {
-    color: white;
-    font-weight: 600;
-    font-size: 0.9rem;
-    letter-spacing: 0.01em;
-}
-
-.nav-pill {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    padding: 6px;
-}
-
 .nav-pill a {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     padding: 6px 14px;
     border-radius: 999px;
-    transition: all 0.2s;
     color: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    text-decoration: none;
+    transition: 0.2s;
 }
 
-.nav-pill a:hover,
-.nav-pill a.active {
-    background: rgba(255, 255, 255, 0.15);
+.nav-pill a:hover {
+    background: rgba(255, 255, 255, 0.12);
     color: white;
 }
 
-.btn-try {
-    background: white;
-    color: #07101D;
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding: 8px 20px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-    white-space: nowrap;
-}
-
-.btn-try:hover {
-    background: rgba(255, 255, 255, 0.9);
-}
-
+/* Гамбургер меню - только для мобилок */
 .hamburger {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    cursor: pointer;
     background: transparent;
     border: none;
+    cursor: pointer;
     padding: 8px;
 }
 
@@ -222,51 +197,35 @@ onUnmounted(() => {
     height: 2px;
     background: white;
     border-radius: 2px;
-    transition: all 0.3s;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* Mobile Menu */
-#mobile-menu {
-    display: none;
-    position: fixed;
-    top: 68px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    padding: 24px;
-    flex-direction: column;
-    background: rgba(7, 16, 29, 0.97);
-    backdrop-filter: blur(20px);
+/* Мобильное меню */
+.mobile-menu {
+    animation: fadeIn 0.3s ease;
 }
 
-#mobile-menu.open {
-    display: flex;
-}
-
-.mob-link {
-    display: block;
-    padding: 18px 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: white;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-decoration: none;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .nav-pill,
-    .btn-try {
-        display: none;
-    }
-
-    .hamburger {
-        display: flex;
-    }
-
     .nav-inner {
         padding: 0 16px;
+    }
+}
+
+@media (min-width: 769px) {
+    .hamburger {
+        display: none !important;
     }
 }
 </style>

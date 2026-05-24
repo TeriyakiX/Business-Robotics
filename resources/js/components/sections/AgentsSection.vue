@@ -4,12 +4,12 @@
             <div class="section-head">
                 <div class="section-pill dark">
                     <span class="dot" style="background: #00CFFF;"></span>
-                    Продукты
+                    {{ agentsData.agents_pill || 'Продукты' }}
                 </div>
                 <h2 class="section-h">
-                    <span class="glow-text">AI-агенты</span> для каждой задачи
+                    <span class="glow-text">{{ agentsData.agents_title || 'AI-агенты' }}</span> {{ agentsData.agents_title_suffix || 'для каждой задачи' }}
                 </h2>
-                <p class="section-sub">Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс</p>
+                <p class="section-sub">{{ agentsData.agents_subtitle || 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс' }}</p>
             </div>
 
             <div class="agents-grid">
@@ -50,12 +50,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
+
 defineProps({
     agents: {
         type: Array,
         default: () => []
     }
 });
+
+const settingsStore = useSettingsStore();
+const agentsData = computed(() => settingsStore.agents || {});
 </script>
 
 <style scoped>

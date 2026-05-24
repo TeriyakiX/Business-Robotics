@@ -55,9 +55,9 @@ final class ArticleCreateRequest extends FormRequest
             'reading_time' => ['nullable', 'integer', 'min:1', 'max:60'],
             'published_at' => ['nullable', 'date'],
             'is_published' => ['nullable', 'boolean'],
-            'cover' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'cover' => ['nullable', 'file','mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
+            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
             'gallery' => ['nullable', 'array', 'max:10'],
-            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
 

@@ -65,6 +65,16 @@ const routes = [
                 name: 'admin.process-steps',
                 component: () => import('../pages/process/Steps.vue'),
             },
+            {
+                path: 'policies',
+                name: 'admin.policies',
+                component: () => import('../../admin/Policies/AdminPolicies.vue'),
+            },
+            {
+                path: 'settings',
+                name: 'admin.settings',
+                component: () => import('../../admin/Settings/SettingsPanel.vue'),
+            },
         ]
     }
 ];

@@ -16,30 +16,30 @@
                 <div v-if="!submitted">
                     <div class="section-pill dark inline-flex mb-5">
                         <span class="dot" style="background: #00CFFF;"></span>
-                        Бесплатное демо
+                        {{ contactForm.contact_form_pill || 'Бесплатное демо' }}
                     </div>
-                    <h3 class="contact-modal-title">Запросить демо</h3>
-                    <p class="contact-modal-subtitle">Заполните форму — свяжемся в течение 2 часов.</p>
+                    <h3 class="contact-modal-title">{{ contactForm.contact_form_title || 'Запросить демо' }}</h3>
+                    <p class="contact-modal-subtitle">{{ contactForm.contact_form_subtitle || 'Заполните форму — свяжемся в течение 2 часов.' }}</p>
 
                     <form @submit.prevent="handleSubmit" class="contact-form">
                         <input
                             v-model="form.name"
                             type="text"
-                            placeholder="Ваше имя"
+                            :placeholder="contactForm.contact_form_name_label || 'Ваше имя'"
                             class="contact-form-input"
                             required
                         >
                         <input
                             v-model="form.phone"
                             type="tel"
-                            placeholder="Номер телефона"
+                            :placeholder="contactForm.contact_form_phone_label || 'Номер телефона'"
                             class="contact-form-input"
                             required
                         >
                         <input
                             v-model="form.company"
                             type="text"
-                            placeholder="Название компании"
+                            :placeholder="contactForm.contact_form_company_label || 'Название компании'"
                             class="contact-form-input"
                         >
 
@@ -48,10 +48,10 @@
                             :disabled="loading"
                             class="contact-form-submit"
                         >
-                            {{ loading ? 'Отправка...' : 'Отправить заявку' }}
+                            {{ loading ? 'Отправка...' : (contactForm.contact_form_submit_text || 'Отправить заявку') }}
                         </button>
 
-                        <p class="contact-form-note">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности</p>
+                        <p class="contact-form-note">{{ contactForm.contact_form_privacy_note || 'Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности' }}</p>
                     </form>
                 </div>
 
@@ -60,8 +60,8 @@
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                         <polyline points="22 4 12 14.01 9 11.01"/>
                     </svg>
-                    <h3 class="contact-success-title">Заявка отправлена!</h3>
-                    <p class="contact-success-text">Свяжемся с вами в течение 2 часов в рабочее время.</p>
+                    <h3 class="contact-success-title">{{ contactForm.contact_form_success_title || 'Заявка отправлена!' }}</h3>
+                    <p class="contact-success-text">{{ contactForm.contact_form_success_message || 'Свяжемся с вами в течение 2 часов в рабочее время.' }}</p>
                 </div>
             </div>
         </div>
@@ -69,7 +69,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { ContactAPI } from '@/services/api';
 
 const props = defineProps({
@@ -80,6 +81,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:open']);
+
+const settingsStore = useSettingsStore();
+const contactForm = computed(() => settingsStore.contact_form || {});
 
 const isOpen = ref(false);
 const submitted = ref(false);

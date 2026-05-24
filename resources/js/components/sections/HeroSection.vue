@@ -1,16 +1,33 @@
 <template>
     <section id="hero" class="hero-section">
-        <!-- Spline 3D Robot -->
-        <div class="hero-spline">
-            <spline-viewer
-                url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                loading-anim-type="none"
-            ></spline-viewer>
+        <div class="hero-background">
+            <!-- Spline 3D модель -->
+            <div v-if="settingsStore.hero.hero_use_spline" class="hero-spline">
+                <spline-viewer
+                    url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                    loading-anim-type="none"
+                ></spline-viewer>
+            </div>
+
+            <!-- Видео фон -->
+            <video v-else-if="mediaType === 'video' && mediaUrl"
+                   autoplay muted loop playsinline class="hero-video" :key="mediaUrl">
+                <source :src="mediaUrl" type="video/mp4" />
+            </video>
+
+            <!-- Изображение фон -->
+            <img v-else-if="mediaType === 'image' && mediaUrl"
+                 :src="mediaUrl" alt="Hero background" class="hero-image" :key="mediaUrl" />
+
+            <!-- Статичный фон из hero_background -->
+            <div v-else-if="backgroundUrl" class="hero-static-bg" :style="{ backgroundImage: `url('${backgroundUrl}')` }"></div>
+
+            <!-- Дефолтный фон если ничего нет -->
+            <div v-else class="hero-default-bg"></div>
         </div>
 
         <div class="hero-overlay"></div>
 
-        <!-- Spotlight SVG -->
         <svg class="spotlight" width="900" height="900" viewBox="0 0 900 900" fill="none">
             <g filter="url(#sf)">
                 <ellipse cx="200" cy="100" rx="500" ry="160" transform="rotate(-45 200 100)" fill="white" fill-opacity="0.06"/>
@@ -22,28 +39,23 @@
             </defs>
         </svg>
 
-        <!-- Hero Content -->
         <div class="hero-content">
-            <p class="hero-eyebrow">AI-автоматизация нового поколения</p>
+            <p class="hero-eyebrow">{{ settingsStore.hero.hero_eyebrow }}</p>
             <h1 class="hero-title">
-                <span class="hero-title-line">Автоматизируйте</span>
-                <span class="hero-title-line">рабочие процессы</span>
-                <span class="hero-title-line"><span class="shiny-text">с AI-агентами.</span></span>
+                <span class="hero-title-line">{{ settingsStore.hero.hero_title_line_1 }}</span>
+                <span class="hero-title-line">{{ settingsStore.hero.hero_title_line_2 }}</span>
+                <span class="hero-title-line"><span class="shiny-text">{{ settingsStore.hero.hero_title_line_3 }}</span></span>
             </h1>
             <div class="hero-cta">
-                <button
-                    @click="$emit('open-contact')"
-                    class="hero-btn"
-                >
-                    Попробовать демо-версию
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <button @click="$emit('open-contact')" class="hero-btn">
+                    {{ settingsStore.hero.hero_button_text }}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14m-7-7 7 7-7 7"/>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <!-- Scroll Hint -->
         <div class="scroll-hint" :style="{ opacity: showScrollHint ? 0.4 : 0 }">
             <span>Scroll</span>
             <div class="scroll-line"></div>
@@ -52,19 +64,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
 import '@splinetool/viewer';
 
 defineEmits(['open-contact']);
 
+const settingsStore = useSettingsStore();
 const showScrollHint = ref(true);
+
+// Получаем URL фона с правильным путем
+const backgroundUrl = computed(() => {
+    const bg = settingsStore.hero.hero_background;
+    if (!bg) return null;
+    // Если путь уже содержит /storage/, не добавляем лишний слеш
+    if (bg.startsWith('/storage/')) return bg;
+    if (bg.startsWith('storage/')) return '/' + bg;
+    return `/storage/${bg}`;
+});
+
+// Получаем URL медиа (видео/гиф)
+const mediaUrl = computed(() => {
+    const media = settingsStore.hero.hero_media;
+    if (!media) return null;
+    if (media.startsWith('/storage/')) return media;
+    if (media.startsWith('storage/')) return '/' + media;
+    return `/storage/${media}`;
+});
+
+// Тип медиа
+const mediaType = computed(() => settingsStore.hero.hero_media_type || 'image');
+
+// Отладка
+const debug = () => {
+    console.log('🔍 Hero Debug:', {
+        useSpline: settingsStore.hero.hero_use_spline,
+        hero_background: settingsStore.hero.hero_background,
+        backgroundUrl: backgroundUrl.value,
+        hero_media: settingsStore.hero.hero_media,
+        mediaUrl: mediaUrl.value,
+        mediaType: mediaType.value
+    });
+};
 
 const handleScroll = () => {
     showScrollHint.value = window.scrollY < 100;
 };
 
-onMounted(() => {
+onMounted(async () => {
+    await settingsStore.fetchSettings();
+    // Принудительно обновляем фон
+    debug();
     window.addEventListener('scroll', handleScroll);
+
+    // Если фон не загрузился через 2 секунды - повторная попытка
+    setTimeout(() => {
+        if (!backgroundUrl.value && !mediaUrl.value && settingsStore.hero.hero_use_spline === false) {
+            console.warn('⚠️ Фон не загрузился, повторная загрузка настроек...');
+            settingsStore.fetchSettings();
+        }
+    }, 2000);
 });
 
 onUnmounted(() => {
@@ -73,7 +132,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ========== HERO SECTION STYLES ========== */
 .hero-section {
     position: relative;
     width: 100%;
@@ -84,11 +142,17 @@ onUnmounted(() => {
     flex-direction: column;
 }
 
-/* Spline 3D Container */
-.hero-spline {
+.hero-background {
     position: absolute;
     inset: 0;
     z-index: 0;
+}
+
+.hero-spline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .hero-spline :deep(spline-viewer) {
@@ -96,7 +160,27 @@ onUnmounted(() => {
     height: 100%;
 }
 
-/* Hero Overlay */
+.hero-video,
+.hero-image,
+.hero-static-bg,
+.hero-default-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-static-bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.hero-default-bg {
+    background: linear-gradient(135deg, #0D1E30 0%, #1a2a3a 100%);
+}
+
 .hero-overlay {
     position: absolute;
     inset: 0;
@@ -104,7 +188,6 @@ onUnmounted(() => {
     background: rgba(0, 0, 0, 0.28);
 }
 
-/* Spotlight */
 .spotlight {
     position: absolute;
     top: -40px;
@@ -126,7 +209,6 @@ onUnmounted(() => {
     }
 }
 
-/* Hero Content */
 .hero-content {
     position: relative;
     z-index: 2;
@@ -138,14 +220,6 @@ onUnmounted(() => {
     text-align: center;
     padding: 0 24px;
     margin-top: -48px;
-}
-
-.hero-logo {
-    height: 72px;
-    width: auto;
-    object-fit: contain;
-    margin-bottom: 28px;
-    filter: drop-shadow(0 0 24px rgba(0, 207, 255, 0.35));
 }
 
 .hero-eyebrow {
@@ -178,7 +252,6 @@ onUnmounted(() => {
     margin-top: 6px;
 }
 
-/* Shiny Text */
 .shiny-text {
     background: linear-gradient(100deg, #64CEFB 0%, #64CEFB 28%, #ffffff 50%, #64CEFB 72%, #64CEFB 100%);
     background-size: 250% auto;
@@ -195,7 +268,6 @@ onUnmounted(() => {
     100% { background-position: -200% center; }
 }
 
-/* Hero CTA */
 .hero-cta {
     margin-top: 40px;
 }
@@ -220,7 +292,6 @@ onUnmounted(() => {
     transform: scale(1.05);
 }
 
-/* Scroll Hint */
 .scroll-hint {
     position: absolute;
     bottom: 32px;
@@ -253,7 +324,6 @@ onUnmounted(() => {
     50% { opacity: 0.9; }
 }
 
-/* Floating Orbs Animation (optional background effect) */
 .hero-section::before {
     content: '';
     position: absolute;
@@ -290,11 +360,6 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .hero-logo {
-        height: 56px;
-        margin-bottom: 20px;
-    }
-
     .hero-eyebrow {
         font-size: 0.7rem;
         margin-bottom: 16px;
@@ -315,10 +380,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
-    .hero-logo {
-        height: 48px;
-    }
-
     .hero-btn {
         padding: 10px 20px;
         font-size: 0.85rem;

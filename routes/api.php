@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\CaseController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\PartnerStepController;
 use App\Http\Controllers\Api\PartnerVariantController;
 use App\Http\Controllers\Api\ProcessStepController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Api\PolicyController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -38,7 +40,12 @@ Route::prefix('v1')->group(function () {
     Route::get('process-steps', [ProcessStepController::class, 'index']);
     Route::get('marquee-items', [MarqueeItemController::class, 'index']);
 
+    Route::get('policies', [PolicyController::class, 'list']);
+    Route::get('policies/{slug}', [PolicyController::class, 'show']);
+
     Route::post('contact', [ContactController::class, 'create']);
+
+    Route::get('/settings', [SettingsController::class, 'publicIndex']);
 
     Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
 
@@ -106,5 +113,23 @@ Route::prefix('v1')->group(function () {
         Route::post('/process-steps', [ProcessStepController::class, 'create']);
         Route::put('/process-steps/{id}', [ProcessStepController::class, 'update']);
         Route::delete('/process-steps/{id}', [ProcessStepController::class, 'delete']);
+
+        Route::get('/policies', [PolicyController::class, 'adminList']);
+        Route::get('/policies/{id}', [PolicyController::class, 'item']);
+        Route::post('/policies', [PolicyController::class, 'create']);
+        Route::put('/policies/{id}', [PolicyController::class, 'update']);
+        Route::delete('/policies/{id}', [PolicyController::class, 'delete']);
+
+        // ========== НАСТРОЙКИ САЙТА ==========
+        Route::get('/settings', [SettingsController::class, 'index']);
+
+        // Отдельные методы для каждой группы
+        Route::post('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/settings/cta', [SettingsController::class, 'update']);
+        Route::post('/settings/contact-form', [SettingsController::class, 'update']);
+        Route::post('/settings/footer', [SettingsController::class, 'update']);
+        Route::post('/settings/contacts', [SettingsController::class, 'update']);
+        Route::post('/settings/socials', [SettingsController::class, 'updateSocials']);
+        Route::post('/settings/hero-with-files', [SettingsController::class, 'updateHeroWithFiles']);
     });
 });

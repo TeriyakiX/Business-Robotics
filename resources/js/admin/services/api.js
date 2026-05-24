@@ -1,15 +1,23 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api/v1/admin',
+    baseURL: '/api/v1',
     headers: {
         'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    withCredentials: true,
 });
 
-// Перехватчик ответов
+// Добавляем токен в запросы
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 api.interceptors.response.use(
     (response) => response.data,
     (error) => {
@@ -17,158 +25,136 @@ api.interceptors.response.use(
             localStorage.removeItem('admin_token');
             window.location.href = '/admin/login';
         }
+        console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);
     }
 );
 
-// Перехватчик запросов - добавляем токен и преобразуем данные
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('admin_token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // Пропускаем FormData (файлы) - не трогаем их
-    if (config.data instanceof FormData) {
-        return config;
-    }
-
-    // Преобразуем boolean поля в данных запроса (только для обычных объектов)
-    if (config.data && typeof config.data === 'object') {
-        const normalizedData = { ...config.data };
-
-        const booleanFields = ['is_active', 'is_visible', 'is_published'];
-        booleanFields.forEach(field => {
-            if (normalizedData[field] !== undefined) {
-                normalizedData[field] = normalizedData[field] === true || normalizedData[field] === 'true' || normalizedData[field] === 1;
-            }
-        });
-
-        config.data = normalizedData;
-    }
-
-    return config;
-});
-
-// Хелпер для нормализации данных перед отправкой
+// Функция нормализации данных
 const normalizeData = (data) => {
     if (!data) return data;
-
     const normalized = { ...data };
-
     const booleanFields = ['is_active', 'is_visible', 'is_published'];
     booleanFields.forEach(field => {
         if (normalized[field] !== undefined) {
             normalized[field] = normalized[field] === true || normalized[field] === 'true' || normalized[field] === 1;
         }
     });
-
-    const numberFields = ['sort_order', 'percentage', 'min_amount', 'reading_time', 'views_count', 'number'];
-    numberFields.forEach(field => {
-        if (normalized[field] !== undefined && normalized[field] !== null && normalized[field] !== '') {
-            normalized[field] = Number(normalized[field]);
-        }
-    });
-
     return normalized;
 };
 
 // ========== АВТОРИЗАЦИЯ ==========
 export const authAPI = {
-    login: (email, password) => api.post('/login', { email, password }),
-    logout: () => api.post('/logout'),
-    me: () => api.get('/me'),
+    login: (email, password) => api.post('/admin/login', { email, password }),
+    logout: () => api.post('/admin/logout'),
+    me: () => api.get('/admin/me'),
 };
 
-// ========== AI-АГЕНТЫ ==========
+// ========== AGENTS ==========
 export const agentsAPI = {
-    getAll: (params = {}) => api.get('/agents', { params }),
-    getById: (id) => api.get(`/agents/${id}`),
-    create: (data) => api.post('/agents', normalizeData(data)),
-    update: (id, data) => api.put(`/agents/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/agents/${id}`),
-    restore: (id) => api.post(`/agents/${id}/restore`),
+    getAll: (params = {}) => api.get('/admin/agents', { params }),
+    getById: (id) => api.get(`/admin/agents/${id}`),
+    create: (data) => api.post('/admin/agents', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/agents/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/agents/${id}`),
+    restore: (id) => api.post(`/admin/agents/${id}/restore`),
 };
 
-// ========== КЕЙСЫ ==========
+// ========== CASES ==========
 export const casesAPI = {
-    getAll: (params = {}) => api.get('/cases', { params }),
-    getById: (id) => api.get(`/cases/${id}`),
-    create: (data) => api.post('/cases', normalizeData(data)),
-    update: (id, data) => api.put(`/cases/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/cases/${id}`),
-    restore: (id) => api.post(`/cases/${id}/restore`),
+    getAll: (params = {}) => api.get('/admin/cases', { params }),
+    getById: (id) => api.get(`/admin/cases/${id}`),
+    create: (data) => api.post('/admin/cases', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/cases/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/cases/${id}`),
+    restore: (id) => api.post(`/admin/cases/${id}/restore`),
 };
 
-// ========== СТАТЬИ ==========
+// ========== ARTICLES ==========
 export const articlesAPI = {
-    getAll: (params = {}) => api.get('/articles', { params }),
-    getById: (id) => api.get(`/articles/${id}`),
-    getBySlug: (slug) => api.get(`/articles/slug/${slug}`),
-    create: (data) => api.post('/articles', data),
-    update: (id, data) => api.put(`/articles/${id}`, data),
-    delete: (id) => api.delete(`/articles/${id}`),
-    restore: (id) => api.post(`/articles/${id}/restore`),
-    // Методы для загрузки файлов - FormData не трогаем
-    createWithFiles: (formData) => api.post('/articles', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    updateWithFiles: (id, formData) => api.post(`/articles/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    getAll: (params = {}) => api.get('/admin/articles', { params }),
+    getById: (id) => api.get(`/admin/articles/${id}`),
+    create: (data) => api.post('/admin/articles', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/articles/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/articles/${id}`),
+    restore: (id) => api.post(`/admin/articles/${id}/restore`),
 };
 
-// ========== ЗАЯВКИ ==========
+// ========== CONTACTS ==========
 export const contactsAPI = {
-    getAll: (params = {}) => api.get('/contacts', { params }),
-    getById: (id) => api.get(`/contacts/${id}`),
-    updateStatus: (id, status, notes = null) => api.put(`/contacts/${id}/status`, { status, notes }),
-    delete: (id) => api.delete(`/contacts/${id}`),
+    getAll: (params = {}) => api.get('/admin/contacts', { params }),
+    getById: (id) => api.get(`/admin/contacts/${id}`),
+    updateStatus: (id, status, notes = null) => api.put(`/admin/contacts/${id}/status`, { status, notes }),
+    delete: (id) => api.delete(`/admin/contacts/${id}`),
 };
 
-// ========== MARQUEE ITEMS ==========
-export const marqueeAPI = {
-    getAll: (params = {}) => api.get('/marquee-items', { params }),
-    getById: (id) => api.get(`/marquee-items/${id}`),
-    create: (data) => api.post('/marquee-items', normalizeData(data)),
-    update: (id, data) => api.put(`/marquee-items/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/marquee-items/${id}`),
-};
-
-// ========== PARTNER VARIANTS ==========
+// ========== PARTNER ==========
 export const partnerVariantsAPI = {
-    getAll: (params = {}) => api.get('/partner-variants', { params }),
-    getById: (id) => api.get(`/partner-variants/${id}`),
-    create: (data) => api.post('/partner-variants', normalizeData(data)),
-    update: (id, data) => api.put(`/partner-variants/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/partner-variants/${id}`),
+    getAll: (params = {}) => api.get('/admin/partner-variants', { params }),
+    getById: (id) => api.get(`/admin/partner-variants/${id}`),
+    create: (data) => api.post('/admin/partner-variants', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/partner-variants/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/partner-variants/${id}`),
 };
 
-// ========== PARTNER STEPS ==========
 export const partnerStepsAPI = {
-    getAll: (params = {}) => api.get('/partner-steps', { params }),
-    getById: (id) => api.get(`/partner-steps/${id}`),
-    create: (data) => api.post('/partner-steps', normalizeData(data)),
-    update: (id, data) => api.put(`/partner-steps/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/partner-steps/${id}`),
+    getAll: (params = {}) => api.get('/admin/partner-steps', { params }),
+    getById: (id) => api.get(`/admin/partner-steps/${id}`),
+    create: (data) => api.post('/admin/partner-steps', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/partner-steps/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/partner-steps/${id}`),
 };
 
-// ========== PARTNER BENEFITS ==========
 export const partnerBenefitsAPI = {
-    getAll: (params = {}) => api.get('/partner-benefits', { params }),
-    getById: (id) => api.get(`/partner-benefits/${id}`),
-    create: (data) => api.post('/partner-benefits', normalizeData(data)),
-    update: (id, data) => api.put(`/partner-benefits/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/partner-benefits/${id}`),
+    getAll: (params = {}) => api.get('/admin/partner-benefits', { params }),
+    getById: (id) => api.get(`/admin/partner-benefits/${id}`),
+    create: (data) => api.post('/admin/partner-benefits', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/partner-benefits/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/partner-benefits/${id}`),
 };
 
 // ========== PROCESS STEPS ==========
 export const processStepsAPI = {
-    getAll: (params = {}) => api.get('/process-steps', { params }),
-    getById: (id) => api.get(`/process-steps/${id}`),
-    create: (data) => api.post('/process-steps', normalizeData(data)),
-    update: (id, data) => api.put(`/process-steps/${id}`, normalizeData(data)),
-    delete: (id) => api.delete(`/process-steps/${id}`),
+    getAll: (params = {}) => api.get('/admin/process-steps', { params }),
+    getById: (id) => api.get(`/admin/process-steps/${id}`),
+    create: (data) => api.post('/admin/process-steps', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/process-steps/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/process-steps/${id}`),
 };
 
+// ========== MARQUEE ==========
+export const marqueeAPI = {
+    getAll: (params = {}) => api.get('/admin/marquee-items', { params }),
+    getById: (id) => api.get(`/admin/marquee-items/${id}`),
+    create: (data) => api.post('/admin/marquee-items', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/marquee-items/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/marquee-items/${id}`),
+};
+
+// ========== POLICIES ==========
+export const policiesAPI = {
+    getAll: (params = {}) => api.get('/admin/policies', { params }),
+    getById: (id) => api.get(`/admin/policies/${id}`),
+    create: (data) => api.post('/admin/policies', normalizeData(data)),
+    update: (id, data) => api.put(`/admin/policies/${id}`, normalizeData(data)),
+    delete: (id) => api.delete(`/admin/policies/${id}`),
+    restore: (id) => api.post(`/admin/policies/${id}/restore`),
+};
+
+// ========== НАСТРОЙКИ САЙТА ==========
+export const settingsAPI = {
+    getPublic: () => api.get('/settings'),
+    getAll: () => api.get('/admin/settings'),
+
+    // Универсальное обновление
+    updateSettings: (data) => api.post('/admin/settings', data),
+
+    // Отдельные методы для каждой группы
+    updateCTA: (data) => api.post('/admin/settings/cta', data),
+    updateContactForm: (data) => api.post('/admin/settings/contact-form', data),
+    updateFooter: (data) => api.post('/admin/settings/footer', data),
+    updateContacts: (data) => api.post('/admin/settings/contacts', data),
+    updateHeroWithFiles: (formData) => api.post('/admin/settings/hero-with-files', formData),
+    updateSocials: (data) => api.post('/admin/settings/socials', data),
+};
 export default api;

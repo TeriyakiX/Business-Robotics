@@ -4,12 +4,14 @@
             <div class="section-head">
                 <div class="section-pill dark">
                     <span class="dot" style="background: #00CFFF;"></span>
-                    Процесс
+                    {{ settingsStore.cta.cta_pill || 'Процесс' }}
                 </div>
                 <h2 class="section-h" style="color: white;">
                     Запуск за <span class="glow-text">14 дней</span>
                 </h2>
-                <p class="section-sub" style="color: #94B4CC;">От консультации до полноценной работы агента — без сложностей</p>
+                <p class="section-sub" style="color: #94B4CC;">
+                    {{ settingsStore.cta.cta_subtitle || 'От консультации до полноценной работы агента — без сложностей' }}
+                </p>
             </div>
 
             <div class="process-grid">
@@ -31,12 +33,16 @@
 </template>
 
 <script setup>
+import { useSettingsStore } from '@/stores/settingsStore';
+
 defineProps({
     steps: {
         type: Array,
         default: () => []
     }
 });
+
+const settingsStore = useSettingsStore();
 
 const formatNumber = (num) => {
     return num.toString().padStart(2, '0');

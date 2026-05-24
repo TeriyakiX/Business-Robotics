@@ -4,12 +4,12 @@
             <div class="section-head">
                 <div class="section-pill light">
                     <span class="dot" style="background: #005FAA;"></span>
-                    Кейсы
+                    {{ casesData.cases_pill || 'Кейсы' }}
                 </div>
                 <h2 class="section-h" style="color: #0C1B2E;">
-                    Реальные <span class="glow-text">результаты</span>
+                    {{ casesData.cases_title || 'Реальные' }} <span class="glow-text">{{ casesData.cases_title_highlight || 'результаты' }}</span>
                 </h2>
-                <p class="section-sub" style="color: #4E6E88;">Как Business Robotics помог бизнесам сократить расходы и увеличить продажи</p>
+                <p class="section-sub" style="color: #4E6E88;">{{ casesData.cases_subtitle || 'Как Business Robotics помог бизнесам сократить расходы и увеличить продажи' }}</p>
             </div>
 
             <div class="cases-grid">
@@ -55,7 +55,7 @@
                     @click="showAll = !showAll"
                     class="cases-more-btn"
                 >
-                    {{ showAll ? 'Скрыть кейсы' : 'Смотреть ещё кейсы' }}
+                    {{ showAll ? (casesData.cases_hide_button || 'Скрыть кейсы') : (casesData.cases_more_button || 'Смотреть ещё кейсы') }}
                     <svg
                         class="cases-more-icon"
                         :class="{ 'rotated': showAll }"
@@ -76,6 +76,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const props = defineProps({
     cases: {
@@ -83,6 +84,9 @@ const props = defineProps({
         default: () => []
     }
 });
+
+const settingsStore = useSettingsStore();
+const casesData = computed(() => settingsStore.cases || {});
 
 const showAll = ref(false);
 

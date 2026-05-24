@@ -4,12 +4,14 @@
             <div class="section-head">
                 <div class="section-pill light">
                     <span class="dot" style="background: #005FAA;"></span>
-                    Партнёрам
+                    {{ partners.partners_pill || 'Партнёрам' }}
                 </div>
                 <h2 class="section-h" style="color: #0C1B2E;">
-                    Зарабатывайте вместе с <span class="glow-text">Business Robotics</span>
+                    {{ partners.partners_title || 'Зарабатывайте вместе с Business Robotics' }}
                 </h2>
-                <p class="section-sub" style="color: #4E6E88;">Приводите клиентов — мы закрываем всё остальное. Получайте % с каждой сделки без вложений.</p>
+                <p class="section-sub" style="color: #4E6E88;">
+                    {{ partners.partners_subtitle || 'Приводите клиентов — мы закрываем всё остальное. Получайте % с каждой сделки без вложений.' }}
+                </p>
             </div>
 
             <div class="partners-grid">
@@ -20,25 +22,23 @@
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                         </svg>
-                        Вариант 1
+                        {{ partners.partner_variant1_badge || 'Вариант 1' }}
                     </div>
-                    <div class="partner-title">Разработка продукта</div>
-                    <p class="partner-desc">Партнёр получает процент от стоимости разработки, которую оплачивает клиент. Разовый платёж — сразу после закрытия сделки.</p>
+                    <div class="partner-title">{{ partners.partner_variant1_title || 'Разработка продукта' }}</div>
+                    <p class="partner-desc">{{ partners.partner_variant1_desc || 'Партнёр получает процент от стоимости разработки, которую оплачивает клиент. Разовый платёж — сразу после закрытия сделки.' }}</p>
                     <div class="partner-stats">
                         <div>
-                            <div class="partner-percent partner-percent-dev">до 20%</div>
-                            <div class="partner-percent-label">от суммы разработки</div>
+                            <div class="partner-percent partner-percent-dev">{{ partners.partner_variant1_percent || 'до 20%' }}</div>
+                            <div class="partner-percent-label">{{ partners.partner_variant1_percent_label || 'от суммы разработки' }}</div>
                         </div>
                         <div class="partner-divider"></div>
                         <div>
-                            <div class="partner-amount-label">Чек разработки</div>
-                            <div class="partner-amount-value">от 100 тыс ₽</div>
+                            <div class="partner-amount-label">{{ partners.partner_variant1_amount_label || 'Чек разработки' }}</div>
+                            <div class="partner-amount-value">{{ partners.partner_variant1_amount_value || 'от 100 тыс ₽' }}</div>
                         </div>
                     </div>
                     <div class="partner-tags">
-                        <span class="partner-tag">Голосовые роботы</span>
-                        <span class="partner-tag">Чат-боты</span>
-                        <span class="partner-tag">AI-агенты</span>
+                        <span v-for="tag in variant1Tags" :key="tag" class="partner-tag">{{ tag }}</span>
                     </div>
                 </div>
 
@@ -49,25 +49,23 @@
                             <rect x="3" y="4" width="18" height="18" rx="2"/>
                             <path d="M16 2v4M8 2v4M3 10h18"/>
                         </svg>
-                        Вариант 2
+                        {{ partners.partner_variant2_badge || 'Вариант 2' }}
                     </div>
-                    <div class="partner-title">Подписка клиента</div>
-                    <p class="partner-desc">Партнёр получает процент от первого платежа клиента по подписке. Выплата сразу после оплаты клиентом — без ожидания.</p>
+                    <div class="partner-title">{{ partners.partner_variant2_title || 'Подписка клиента' }}</div>
+                    <p class="partner-desc">{{ partners.partner_variant2_desc || 'Партнёр получает процент от первого платежа клиента по подписке. Выплата сразу после оплаты клиентом — без ожидания.' }}</p>
                     <div class="partner-stats">
                         <div>
-                            <div class="partner-percent partner-percent-sub">до 20%</div>
-                            <div class="partner-percent-label">от первого платежа</div>
+                            <div class="partner-percent partner-percent-sub">{{ partners.partner_variant2_percent || 'до 20%' }}</div>
+                            <div class="partner-percent-label">{{ partners.partner_variant2_percent_label || 'от первого платежа' }}</div>
                         </div>
                         <div class="partner-divider"></div>
                         <div>
-                            <div class="partner-amount-label">Первый платёж</div>
-                            <div class="partner-amount-value">от 30 тыс ₽/мес</div>
+                            <div class="partner-amount-label">{{ partners.partner_variant2_amount_label || 'Первый платёж' }}</div>
+                            <div class="partner-amount-value">{{ partners.partner_variant2_amount_value || 'от 30 тыс ₽/мес' }}</div>
                         </div>
                     </div>
                     <div class="partner-tags">
-                        <span class="partner-tag partner-tag-sub">AI-Consultant</span>
-                        <span class="partner-tag partner-tag-sub">AI-LeadGen</span>
-                        <span class="partner-tag partner-tag-sub">AI-Manager</span>
+                        <span v-for="tag in variant2Tags" :key="tag" class="partner-tag partner-tag-sub">{{ tag }}</span>
                     </div>
                 </div>
             </div>
@@ -75,93 +73,109 @@
             <div class="partner-earn-card">
                 <div class="partner-earn-row">
                     <div class="partner-earn-item">
-                        <div class="partner-earn-label">Мин. доход с клиента</div>
-                        <div class="partner-earn-value">от 20 000 ₽</div>
-                        <div class="partner-earn-note">разовая выплата</div>
+                        <div class="partner-earn-label">{{ partners.partner_earn_min_label || 'Мин. доход с клиента' }}</div>
+                        <div class="partner-earn-value">{{ partners.partner_earn_min_value || 'от 20 000 ₽' }}</div>
+                        <div class="partner-earn-note">{{ partners.partner_earn_min_note || 'разовая выплата' }}</div>
                     </div>
                     <div class="partner-earn-divider"></div>
                     <div class="partner-earn-item">
-                        <div class="partner-earn-label">Доход с флагмана</div>
-                        <div class="partner-earn-value">сотни тыс ₽</div>
-                        <div class="partner-earn-note">за одну сделку</div>
+                        <div class="partner-earn-label">{{ partners.partner_earn_top_label || 'Доход с флагмана' }}</div>
+                        <div class="partner-earn-value">{{ partners.partner_earn_top_value || 'сотни тыс ₽' }}</div>
+                        <div class="partner-earn-note">{{ partners.partner_earn_top_note || 'за одну сделку' }}</div>
                     </div>
                     <div class="partner-earn-divider"></div>
                     <div class="partner-earn-item">
-                        <div class="partner-earn-label">Аудит для клиента</div>
-                        <div class="partner-earn-value">бесплатно</div>
-                        <div class="partner-earn-note">мы берём расходы на себя</div>
+                        <div class="partner-earn-label">{{ partners.partner_earn_audit_label || 'Аудит для клиента' }}</div>
+                        <div class="partner-earn-value">{{ partners.partner_earn_audit_value || 'бесплатно' }}</div>
+                        <div class="partner-earn-note">{{ partners.partner_earn_audit_note || 'мы берём расходы на себя' }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="partner-how-grid">
                 <div>
-                    <h3 class="partner-how-title">Как работает программа</h3>
+                    <h3 class="partner-how-title">{{ partners.partner_steps_title || 'Как работает программа' }}</h3>
                     <div class="partner-step">
-                        <div class="partner-step-num">1</div>
-                        <div class="partner-step-text"><strong>Передайте контакт</strong><br>Знаете бизнес, которому нужна AI-автоматизация? Поделитесь контактом — мы свяжемся сами.</div>
+                        <div class="partner-step-num">{{ partners.partner_step1_num || '1' }}</div>
+                        <div class="partner-step-text">
+                            <strong>{{ partners.partner_step1_title || 'Передайте контакт' }}</strong><br>
+                            {{ partners.partner_step1_desc || 'Знаете бизнес, которому нужна AI-автоматизация? Поделитесь контактом — мы свяжемся сами.' }}
+                        </div>
                     </div>
                     <div class="partner-step">
-                        <div class="partner-step-num">2</div>
-                        <div class="partner-step-text"><strong>Мы проводим бесплатный аудит</strong><br>Наши специалисты анализируют процессы клиента, подбирают продукт и рассчитывают ROI.</div>
+                        <div class="partner-step-num">{{ partners.partner_step2_num || '2' }}</div>
+                        <div class="partner-step-text">
+                            <strong>{{ partners.partner_step2_title || 'Мы проводим бесплатный аудит' }}</strong><br>
+                            {{ partners.partner_step2_desc || 'Наши специалисты анализируют процессы клиента, подбирают продукт и рассчитывают ROI.' }}
+                        </div>
                     </div>
                     <div class="partner-step">
-                        <div class="partner-step-num">3</div>
-                        <div class="partner-step-text"><strong>Закрываем сделку и внедряем</strong><br>Полная разработка и интеграция — без вашего участия. Всё под ключ за 14 дней.</div>
+                        <div class="partner-step-num">{{ partners.partner_step3_num || '3' }}</div>
+                        <div class="partner-step-text">
+                            <strong>{{ partners.partner_step3_title || 'Закрываем сделку и внедряем' }}</strong><br>
+                            {{ partners.partner_step3_desc || 'Полная разработка и интеграция — без вашего участия. Всё под ключ за 14 дней.' }}
+                        </div>
                     </div>
                     <div class="partner-step">
-                        <div class="partner-step-num" style="background: #00CFFF;">4</div>
-                        <div class="partner-step-text"><strong>Выплата после оплаты клиентом</strong><br>Получаете партнёрский % сразу после того, как клиент оплатил. Прозрачно и без задержек.</div>
+                        <div class="partner-step-num" style="background: #00CFFF;">{{ partners.partner_step4_num || '4' }}</div>
+                        <div class="partner-step-text">
+                            <strong>{{ partners.partner_step4_title || 'Выплата после оплаты клиентом' }}</strong><br>
+                            {{ partners.partner_step4_desc || 'Получаете партнёрский % сразу после того, как клиент оплатил. Прозрачно и без задержек.' }}
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <h3 class="partner-how-title">Почему партнёры выбирают нас</h3>
+                    <h3 class="partner-how-title">{{ partners.partner_why_title || 'Почему партнёры выбирают нас' }}</h3>
+
                     <div class="partner-why-card">
                         <div class="partner-why-icon">
                             <svg width="16" height="16" fill="none" stroke="#005FAA" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                         </div>
                         <div>
-                            <div class="partner-why-title">Без вложений и рисков</div>
-                            <div class="partner-why-desc">Вы только передаёте контакт. Продажи, внедрение, поддержка — всё на нас.</div>
+                            <div class="partner-why-title">{{ partners.partner_why1_title || 'Без вложений и рисков' }}</div>
+                            <div class="partner-why-desc">{{ partners.partner_why1_desc || 'Вы только передаёте контакт. Продажи, внедрение, поддержка — всё на нас.' }}</div>
                         </div>
                     </div>
+
                     <div class="partner-why-card">
                         <div class="partner-why-icon">
                             <svg width="16" height="16" fill="none" stroke="#005FAA" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                         </div>
                         <div>
-                            <div class="partner-why-title">Быстрые выплаты</div>
-                            <div class="partner-why-desc">Выплата сразу после оплаты клиентом — никаких задержек и бюрократии.</div>
+                            <div class="partner-why-title">{{ partners.partner_why2_title || 'Быстрые выплаты' }}</div>
+                            <div class="partner-why-desc">{{ partners.partner_why2_desc || 'Выплата сразу после оплаты клиентом — никаких задержек и бюрократии.' }}</div>
                         </div>
                     </div>
+
                     <div class="partner-why-card">
                         <div class="partner-why-icon">
                             <svg width="16" height="16" fill="none" stroke="#005FAA" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         </div>
                         <div>
-                            <div class="partner-why-title">Поддержка на каждом этапе</div>
-                            <div class="partner-why-desc">Персональный менеджер, помощь с презентацией клиенту и ответы на все вопросы.</div>
+                            <div class="partner-why-title">{{ partners.partner_why3_title || 'Поддержка на каждом этапе' }}</div>
+                            <div class="partner-why-desc">{{ partners.partner_why3_desc || 'Персональный менеджер, помощь с презентацией клиенту и ответы на все вопросы.' }}</div>
                         </div>
                     </div>
+
                     <div class="partner-why-card">
                         <div class="partner-why-icon">
                             <svg width="16" height="16" fill="none" stroke="#005FAA" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         </div>
                         <div>
-                            <div class="partner-why-title">Высокая конверсия</div>
-                            <div class="partner-why-desc">Бесплатный аудит снижает барьер для клиента — большинство аудитов заканчиваются сделкой.</div>
+                            <div class="partner-why-title">{{ partners.partner_why4_title || 'Высокая конверсия' }}</div>
+                            <div class="partner-why-desc">{{ partners.partner_why4_desc || 'Бесплатный аудит снижает барьер для клиента — большинство аудитов заканчиваются сделкой.' }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="partner-cta">
-                <p class="partner-cta-label">Станьте партнёром</p>
-                <h3 class="partner-cta-title">Готовы начать зарабатывать?</h3>
-                <p class="partner-cta-desc">Передайте первый контакт — мы проведём аудит, подберём продукт и закроем внедрение. Аудит бесплатный.</p>
+                <p class="partner-cta-label">{{ partners.partners_cta_label || 'Станьте партнёром' }}</p>
+                <h3 class="partner-cta-title">{{ partners.partners_cta_title || 'Готовы начать зарабатывать?' }}</h3>
+                <p class="partner-cta-desc">{{ partners.partners_cta_desc || 'Передайте первый контакт — мы проведём аудит, подберём продукт и закроем внедрение. Аудит бесплатный.' }}</p>
                 <button @click="$emit('open-contact')" class="partner-cta-btn">
-                    Стать партнёром
+                    {{ partners.partners_cta_button || 'Стать партнёром' }}
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14m-7-7 7 7-7 7"/>
                     </svg>
@@ -172,7 +186,31 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useSettingsStore } from '@/stores/settingsStore';
+
 defineEmits(['open-contact']);
+
+const settingsStore = useSettingsStore();
+const partners = computed(() => settingsStore.partners || {});
+
+const variant1Tags = computed(() => {
+    const tags = partners.value.partner_variant1_tags;
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') {
+        try { return JSON.parse(tags); } catch(e) { return []; }
+    }
+    return ['Голосовые роботы', 'Чат-боты', 'AI-агенты'];
+});
+
+const variant2Tags = computed(() => {
+    const tags = partners.value.partner_variant2_tags;
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') {
+        try { return JSON.parse(tags); } catch(e) { return []; }
+    }
+    return ['AI-Consultant', 'AI-LeadGen', 'AI-Manager'];
+});
 </script>
 
 <style scoped>

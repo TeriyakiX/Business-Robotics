@@ -11,6 +11,24 @@ use Illuminate\Support\Str;
 
 final class ArticleSeeder extends Seeder
 {
+    // Список доступных изображений (1-20.avif)
+    private const array IMAGES = [
+        '1.avif', '2.avif', '3.avif', '4.avif', '5.avif',
+        '6.avif', '7.avif', '8.avif', '9.avif', '10.avif',
+        '11.avif', '12.avif', '13.avif', '14.avif', '15.avif',
+        '16.avif', '17.avif', '18.avif', '19.avif', '20.avif'
+    ];
+
+    // Цвета для категорий
+    private const array CATEGORY_COLORS = [
+        ArticleCategoryEnum::AUTOMATION->value => ['color' => '#00CFFF', 'bg' => 'rgba(0, 207, 255, 0.12)'],
+        ArticleCategoryEnum::AI_FOR_BUSINESS->value => ['color' => '#7C3AED', 'bg' => 'rgba(124, 58, 237, 0.12)'],
+        ArticleCategoryEnum::CASE->value => ['color' => '#34D399', 'bg' => 'rgba(52, 211, 153, 0.12)'],
+        ArticleCategoryEnum::ROBOTS->value => ['color' => '#F59E0B', 'bg' => 'rgba(245, 158, 11, 0.12)'],
+        ArticleCategoryEnum::HR_AUTOMATION->value => ['color' => '#EC4899', 'bg' => 'rgba(236, 72, 153, 0.12)'],
+        ArticleCategoryEnum::TECHNOLOGY->value => ['color' => '#3B82F6', 'bg' => 'rgba(59, 130, 246, 0.12)'],
+    ];
+
     public function run(): void
     {
         $articles = [
@@ -122,18 +140,25 @@ final class ArticleSeeder extends Seeder
         ];
 
         foreach ($articles as $article) {
+            // Рандомное изображение из списка
+            $randomImage = self::IMAGES[array_rand(self::IMAGES)];
+            $categoryValue = $article['category']->value;
+
             Article::query()->updateOrCreate(
                 ['slug' => Str::slug($article['title'])],
                 [
                     Article::SLUG => Str::slug($article['title']),
                     Article::TITLE => $article['title'],
                     Article::CATEGORY => $article['category'],
+                    Article::CATEGORY_COLOR => self::CATEGORY_COLORS[$categoryValue]['color'],
+                    Article::CATEGORY_BG_COLOR => self::CATEGORY_COLORS[$categoryValue]['bg'],
                     Article::DESCRIPTION => $article['description'],
                     Article::CONTENT => $article['content'],
                     Article::READING_TIME => $article['reading_time'],
                     Article::PUBLISHED_AT => now(),
                     Article::IS_PUBLISHED => true,
                     Article::VIEWS_COUNT => rand(100, 5000),
+                    Article::COVER_PATH => 'images/' . $randomImage, // Путь к изображению
                 ]
             );
         }
@@ -169,7 +194,8 @@ final class ArticleSeeder extends Seeder
         return '<p>2025 год стал переломным для рынка гуманоидных роботов: сразу несколько компаний перешли от прототипов к серийному производству. Рассматриваем семь моделей, которые уже вышли за пределы лабораторий.</p><p><strong>Boston Dynamics Atlas (электрическая версия)</strong></p><p>Полностью переработанный Atlas отказался от гидравлики. Грузоподъёмность 23 кг, скорость до 8 км/ч, автономность 4 часа. Применяется на складах Hyundai и автозаводах. Ориентировочная стоимость аренды — $20/час.</p><p><strong>Tesla Optimus Gen 3</strong></p><p>Фокус на задачах с мягкими объектами — сортировка, упаковка, складирование. 22 степени свободы в руках. Tesla планирует производство 1 млн роботов в год к 2027 году по цене от $20 000.</p><p><strong>Figure 02</strong></p><p>Уже работает на конвейере BMW в Спартанберге. Выполняет задачи структурной сборки, ранее требовавшие ловкости человека. Интегрирован с ChatGPT для понимания естественных команд.</p><p><strong>Unitree H1 и G1</strong></p><p>Китайские роботы по доступной цене: H1 — $90 000, G1 — $16 000. Рекордная скорость бега — 3,3 м/с. Уже поставляются в университеты и исследовательские центры по всему миру.</p><p><strong>Agility Robotics Digit</strong></p><p>Специализируется на складской логистике. Amazon тестирует Digit на своих складах — робот перемещает контейнеры и убирает пустые тары.</p>';
     }
 
-    private function getArticleContent7(): string    {
+    private function getArticleContent7(): string
+    {
         return '<p>Ручной холодный обзвон — один из самых неэффективных инструментов продаж: менеджер совершает 40–60 звонков в день, из которых реально дозванивается до 15–20 человек. AI-агент делает 500–1 500 звонков в час с постоянным качеством без усталости и стресса.</p><p><strong>Как работает AI-лидогенерация</strong></p><p>Загружаете базу контактов → AI-агент обзванивает по расписанию → ведёт квалификационный диалог → горячих лидов (интерес + бюджет) сразу переводит на живого менеджера → холодных помечает для повторного контакта → все данные автоматически падают в CRM.</p><p><strong>Сценарии применения</strong></p><p>Реактивация «спящей» клиентской базы, напоминания об окончании договора или абонемента, приглашения на мероприятия, сбор NPS после покупки, первичный отсев нецелевых лидов с входящих заявок с сайтов-агрегаторов.</p><p><strong>Результаты из практики</strong></p><p>Колл-центр страховой компании увеличил количество обработанных лидов в 12 раз без найма новых сотрудников. Конверсия из звонка в сделку выросла с 8% до 13% за счёт мгновенной реакции на заявку и стандартизации скрипта.</p>';
     }
 

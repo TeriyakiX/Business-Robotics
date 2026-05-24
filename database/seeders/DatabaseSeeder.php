@@ -12,12 +12,14 @@ final class DatabaseSeeder extends Seeder
     {
         $this->call([
             AgentSeeder::class,
+            SettingsSeeder::class,
             CaseSeeder::class,
             ArticleSeeder::class,
             ProcessStepSeeder::class,
             MarqueeItemSeeder::class,
             PartnerSeeder::class,
             AdminUserSeeder::class,
+            PolicySeeder::class,
         ]);
     }
 }
