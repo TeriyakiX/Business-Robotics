@@ -373,17 +373,22 @@ onUnmounted(() => {
     border: 0.5px solid rgba(0, 80, 180, 0.12);
     border-radius: 20px;
     box-shadow: 0 2px 12px rgba(0, 40, 120, 0.06);
-    transition: box-shadow 0.25s, border-color 0.25s;
+    transition: all 0.48s cubic-bezier(0.22, 1, 0.36, 1);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     overflow: visible;
     padding: 12px 16px 0 16px;
+    position: relative;
 }
 
 .blog-card:hover {
-    border-color: rgba(0, 150, 220, 0.35);
-    box-shadow: 0 8px 32px rgba(0, 80, 200, 0.12);
+    border-color: rgba(0, 145, 220, 0.6);
+    background: linear-gradient(160deg, #ffffff 0%, #eef6ff 100%);
+    transform: translateY(-12px) scale(1.018);
+    box-shadow:
+        0 0 0 1.5px rgba(0, 145, 220, 0.38),
+        0 28px 72px rgba(0, 80, 200, 0.2);
 }
 
 .blog-card:hover .blog-title {
@@ -401,6 +406,11 @@ onUnmounted(() => {
     object-fit: cover;
     display: block;
     border-radius: 12px;
+    transition: transform 0.5s ease;
+}
+
+.blog-card:hover .blog-card-img {
+    transform: scale(1.04);
 }
 
 /* Контент */
