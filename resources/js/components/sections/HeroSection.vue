@@ -28,6 +28,11 @@
 
         <div class="hero-overlay"></div>
 
+        <!-- Левый верхний текст (из настроек) -->
+        <div class="hero-top-left">
+            <p class="hero-top-text">{{ settingsStore.hero.hero_top_text || 'Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных.' }}</p>
+        </div>
+
         <svg class="spotlight" width="900" height="900" viewBox="0 0 900 900" fill="none">
             <g filter="url(#sf)">
                 <ellipse cx="200" cy="100" rx="500" ry="160" transform="rotate(-45 200 100)" fill="white" fill-opacity="0.06"/>
@@ -77,7 +82,6 @@ const showScrollHint = ref(true);
 const backgroundUrl = computed(() => {
     const bg = settingsStore.hero.hero_background;
     if (!bg) return null;
-    // Если путь уже содержит /storage/, не добавляем лишний слеш
     if (bg.startsWith('/storage/')) return bg;
     if (bg.startsWith('storage/')) return '/' + bg;
     return `/storage/${bg}`;
@@ -95,35 +99,13 @@ const mediaUrl = computed(() => {
 // Тип медиа
 const mediaType = computed(() => settingsStore.hero.hero_media_type || 'image');
 
-// Отладка
-const debug = () => {
-    console.log('🔍 Hero Debug:', {
-        useSpline: settingsStore.hero.hero_use_spline,
-        hero_background: settingsStore.hero.hero_background,
-        backgroundUrl: backgroundUrl.value,
-        hero_media: settingsStore.hero.hero_media,
-        mediaUrl: mediaUrl.value,
-        mediaType: mediaType.value
-    });
-};
-
 const handleScroll = () => {
     showScrollHint.value = window.scrollY < 100;
 };
 
 onMounted(async () => {
     await settingsStore.fetchSettings();
-    // Принудительно обновляем фон
-    debug();
     window.addEventListener('scroll', handleScroll);
-
-    // Если фон не загрузился через 2 секунды - повторная попытка
-    setTimeout(() => {
-        if (!backgroundUrl.value && !mediaUrl.value && settingsStore.hero.hero_use_spline === false) {
-            console.warn('⚠️ Фон не загрузился, повторная загрузка настроек...');
-            settingsStore.fetchSettings();
-        }
-    }, 2000);
 });
 
 onUnmounted(() => {
@@ -186,6 +168,38 @@ onUnmounted(() => {
     inset: 0;
     z-index: 1;
     background: rgba(0, 0, 0, 0.28);
+}
+
+/* ========== ЛЕВЫЙ ВЕРХНИЙ УГОЛ ========== */
+.hero-top-left {
+    position: absolute;
+    top: 120px;
+    left: 80px;
+    z-index: 3;
+    max-width: 380px;
+    background: rgba(13, 30, 48, 0.6);
+    backdrop-filter: blur(12px);
+    padding: 16px 24px;
+    border-radius: 16px;
+    border-left: 3px solid #00CFFF;
+    animation: fadeInLeft 0.8s ease-out 0.3s forwards;
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.hero-top-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+
+@keyframes fadeInLeft {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .spotlight {
@@ -359,7 +373,31 @@ onUnmounted(() => {
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    .hero-top-left {
+        top: 100px;
+        left: 40px;
+        max-width: 320px;
+    }
+
+    .hero-top-text {
+        font-size: 12px;
+    }
+}
+
 @media (max-width: 768px) {
+    .hero-top-left {
+        top: 80px;
+        left: 20px;
+        right: 20px;
+        max-width: none;
+        padding: 12px 16px;
+    }
+
+    .hero-top-text {
+        font-size: 11px;
+    }
+
     .hero-eyebrow {
         font-size: 0.7rem;
         margin-bottom: 16px;
@@ -380,6 +418,12 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+    .hero-top-left {
+        top: 70px;
+        left: 16px;
+        right: 16px;
+    }
+
     .hero-btn {
         padding: 10px 20px;
         font-size: 0.85rem;

@@ -56,8 +56,8 @@ final class ArticleCreateRequest extends FormRequest
             'published_at' => ['nullable', 'date'],
             'is_published' => ['nullable', 'boolean'],
             'cover' => ['nullable', 'file','mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
-            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
             'gallery' => ['nullable', 'array', 'max:10'],
+            'gallery.*' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
         ];
     }
 

@@ -35,6 +35,7 @@ final class SettingsResource extends JsonResource
                 'hero_background' => $hero['hero_background'] ?? null,
                 'hero_media' => $hero['hero_media'] ?? null,
                 'hero_media_type' => $hero['hero_media_type'] ?? null,
+                'hero_top_text' => $hero['hero_top_text'] ?? 'Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных.',
             ],
 
             // ========== AGENTS SECTION ==========

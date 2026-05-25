@@ -7,7 +7,6 @@ namespace App\Services\Article;
 use App\DTOs\Article\ArticleCreateDto;
 use App\DTOs\Article\ArticleListDto;
 use App\DTOs\Article\ArticleUpdateDto;
-use App\Exceptions\Article\ArticleCreateForbiddenException;
 use Illuminate\Http\UploadedFile;
 use App\Exceptions\Article\ArticleNotFoundException;
 use App\Models\Article;
@@ -16,7 +15,6 @@ use App\Validators\ArticleValidator;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
@@ -46,7 +44,6 @@ final readonly class ArticleService
         return $article;
     }
 
-
     private function saveFile(UploadedFile $file, string $folder): string
     {
         $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
@@ -65,14 +62,16 @@ final readonly class ArticleService
         }
 
         $coverPath = null;
-        if ($dto->hasCover()) {
+        if ($dto->hasCover() && $dto->cover instanceof UploadedFile) {
             $coverPath = $this->saveFile($dto->cover, 'articles/covers');
         }
 
         $galleryPaths = [];
-        if ($dto->hasGallery()) {
+        if ($dto->hasGallery() && is_array($dto->gallery)) {
             foreach ($dto->gallery as $image) {
-                $galleryPaths[] = $this->saveFile($image, 'articles/gallery');
+                if ($image instanceof UploadedFile && $image->isValid()) {
+                    $galleryPaths[] = $this->saveFile($image, 'articles/gallery');
+                }
             }
         }
 
@@ -84,7 +83,7 @@ final readonly class ArticleService
             'category_bg_color' => $dto->category_bg_color,
             'description' => $dto->description,
             'content' => $dto->content,
-            'reading_time' => $dto->reading_time ?? ceil(str_word_count($dto->content) / 200),
+            'reading_time' => $dto->reading_time ?? ceil(str_word_count(strip_tags($dto->content)) / 200),
             'published_at' => $publishedAt,
             'is_published' => $dto->is_published ?? false,
             'cover_path' => $coverPath,
@@ -125,14 +124,14 @@ final readonly class ArticleService
                 Storage::disk('public')->delete($article->cover_path);
             }
             $updateData['cover_path'] = null;
-        } elseif ($dto->hasCover()) {
+        } elseif ($dto->hasCover() && $dto->cover instanceof UploadedFile) {
             if ($article->cover_path) {
                 Storage::disk('public')->delete($article->cover_path);
             }
             $updateData['cover_path'] = $this->saveFile($dto->cover, 'articles/covers');
         }
 
-        if ($dto->hasGallery()) {
+        if ($dto->hasGallery() && is_array($dto->gallery)) {
             if ($article->gallery) {
                 foreach ($article->gallery as $oldImage) {
                     Storage::disk('public')->delete($oldImage);
@@ -141,7 +140,9 @@ final readonly class ArticleService
 
             $galleryPaths = [];
             foreach ($dto->gallery as $image) {
-                $galleryPaths[] = $this->saveFile($image, 'articles/gallery');
+                if ($image instanceof UploadedFile && $image->isValid()) {
+                    $galleryPaths[] = $this->saveFile($image, 'articles/gallery');
+                }
             }
             $updateData['gallery'] = $galleryPaths;
         }
@@ -162,7 +163,6 @@ final readonly class ArticleService
         $article = $this->repository->item($id);
         $this->validator->validateArticleExists($article);
 
-        // Удаляем файлы
         if ($article->cover_path) {
             Storage::disk('public')->delete($article->cover_path);
         }

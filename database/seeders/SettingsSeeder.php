@@ -22,6 +22,8 @@ final class SettingsSeeder extends Seeder
             ['key' => 'hero_background', 'value' => null, 'group' => 'hero', 'type' => 'image'],
             ['key' => 'hero_media', 'value' => null, 'group' => 'hero', 'type' => 'file'],
             ['key' => 'hero_media_type', 'value' => null, 'group' => 'hero', 'type' => 'text'],
+            // Левый верхний текст в Hero
+            ['key' => 'hero_top_text', 'value' => 'Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных.', 'group' => 'hero', 'type' => 'text'],
 
             // ========== AGENTS SECTION ==========
             ['key' => 'agents_title', 'value' => 'AI-агенты для каждой задачи', 'group' => 'agents', 'type' => 'text'],

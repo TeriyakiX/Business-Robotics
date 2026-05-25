@@ -23,6 +23,7 @@ final class SettingsUpdateRequest extends FormRequest
             'hero_eyebrow' => 'nullable|string|max:255',
             'hero_button_text' => 'nullable|string|max:255',
             'hero_use_spline' => 'nullable|string',
+            'hero_top_text' => 'nullable|string',
             'cta_pill' => 'nullable|string',
             'cta_title' => 'nullable|string',
             'cta_subtitle' => 'nullable|string',

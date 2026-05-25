@@ -21,6 +21,7 @@
                 <div class="form-group"><label>Заголовок строка 2</label><input type="text" v-model="form.hero_title_line_2" class="form-input" /></div>
                 <div class="form-group"><label>Заголовок строка 3</label><input type="text" v-model="form.hero_title_line_3" class="form-input" /></div>
                 <div class="form-group"><label>Текст кнопки</label><input type="text" v-model="form.hero_button_text" class="form-input" /></div>
+                <div class="form-group"><label>Текст в левом верхнем углу</label><textarea v-model="form.hero_top_text" rows="3" class="form-textarea" placeholder="Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных." /></div>
                 <div class="form-group"><label class="checkbox-label"><input type="checkbox" v-model="form.hero_use_spline" /> Использовать Spline 3D модель</label></div>
                 <div v-if="!form.hero_use_spline" class="form-group"><label>Фоновое изображение</label><input type="file" @change="handleBackgroundUpload" accept="image/*" class="form-file" />
                     <div v-if="backgroundPreview" class="preview"><img :src="backgroundPreview" alt="Preview" /></div>
@@ -222,7 +223,8 @@ const tabs = [
 
 const form = reactive({
     // Hero
-    hero_title_line_1: '', hero_title_line_2: '', hero_title_line_3: '',
+    hero_title_line_1: '', hero_title_line_2: '', hero_title_line_3: '',hero_top_text: '',
+
     hero_eyebrow: '', hero_button_text: '', hero_use_spline: true,
     hero_background: null, hero_media: null, hero_media_type: null,
     // Sections
@@ -309,6 +311,7 @@ const saveHero = async () => {
     formData.append('hero_eyebrow', form.hero_eyebrow || '');
     formData.append('hero_button_text', form.hero_button_text || '');
     formData.append('hero_use_spline', form.hero_use_spline ? 'true' : 'false');
+    formData.append('hero_top_text', form.hero_top_text || ''); // ← ДОБАВЬ ЭТУ СТРОКУ!
 
     // Файлы
     if (backgroundFile.value) {
@@ -320,7 +323,6 @@ const saveHero = async () => {
         console.log('🎬 Добавлен медиа файл:', mediaFile.value.name);
     }
 
-    // Логируем содержимое FormData
     console.log('📦 FormData содержимое:');
     for (let pair of formData.entries()) {
         console.log('  ', pair[0], '=', pair[1] instanceof File ? pair[1].name : pair[1]);
@@ -472,6 +474,7 @@ const loadSettings = async () => {
             form.hero_title_line_1 = data.hero.hero_title_line_1 || '';
             form.hero_title_line_2 = data.hero.hero_title_line_2 || '';
             form.hero_title_line_3 = data.hero.hero_title_line_3 || '';
+            form.hero_top_text = data.hero.hero_top_text || '';
             form.hero_eyebrow = data.hero.hero_eyebrow || '';
             form.hero_button_text = data.hero.hero_button_text || '';
             form.hero_use_spline = data.hero.hero_use_spline === 'true';

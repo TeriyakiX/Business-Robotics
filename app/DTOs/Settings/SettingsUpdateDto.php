@@ -16,6 +16,7 @@ final readonly class SettingsUpdateDto
         public ?string $hero_use_spline = null,
         public ?string $hero_background = null,
         public ?string $hero_media = null,
+        public ?string $hero_top_text = null,
         // Sections
         public ?string $agents_title = null,
         public ?string $agents_subtitle = null,
@@ -132,6 +133,7 @@ final readonly class SettingsUpdateDto
             'hero_use_spline' => $this->hero_use_spline === 'true' ? 'true' : 'false',
             'hero_background' => $this->hero_background,
             'hero_media' => $this->hero_media,
+            'hero_top_text' => $this->hero_top_text,
             'agents_title' => $this->agents_title,
             'agents_subtitle' => $this->agents_subtitle,
             'cases_title' => $this->cases_title,

@@ -60,6 +60,7 @@ final class SettingsController extends Controller
             'hero_eyebrow' => $request->input('hero_eyebrow'),
             'hero_button_text' => $request->input('hero_button_text'),
             'hero_use_spline' => $request->input('hero_use_spline') === 'true' ? 'true' : 'false',
+            'hero_top_text' => $request->input('hero_top_text'), // ДОБАВЛЕНО!
         ];
 
         \Log::info('Text data:', $textData);
@@ -70,9 +71,8 @@ final class SettingsController extends Controller
             $request->file('hero_media')
         );
 
-        // Проверяем что сохранилось
         $saved = $this->service->getAll();
-        \Log::info('After save - hero_background:', [$saved['hero']['hero_background'] ?? null]);
+        \Log::info('After save - hero_top_text:', [$saved['hero']['hero_top_text'] ?? null]);
 
         return response()->json(['success' => true, 'message' => 'Настройки героя обновлены']);
     }

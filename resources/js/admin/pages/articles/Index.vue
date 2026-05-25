@@ -468,7 +468,7 @@ const fetchItems = async () => {
 const openModal = (item = null) => {
     isEdit.value = !!item;
 
-    // Сброс
+    // ПОЛНЫЙ СБРОС ВСЕХ ДАННЫХ
     coverFile.value = null;
     galleryFiles.value = [];
     coverPreview.value = '';
@@ -487,7 +487,6 @@ const openModal = (item = null) => {
         form.description = item.description || '';
         form.content = item.content || '';
         form.reading_time = item.reading_time || 5;
-        // ИСПРАВЛЕНО: split('T')[0] → split(' ')[0]
         form.published_at = item.published_at ? item.published_at.split(' ')[0] : '';
         form.is_published = item.is_published ?? false;
 
@@ -520,34 +519,38 @@ const submitForm = async () => {
     try {
         const formData = new FormData();
 
-        formData.append('title', form.title);
+        formData.append('title', form.title || '');
         if (form.slug) formData.append('slug', form.slug);
-        formData.append('category', form.category);
-        formData.append('category_color', form.category_color);
-        formData.append('category_bg_color', form.category_bg_color);
-        formData.append('description', form.description);
-        formData.append('content', form.content);
-        formData.append('reading_time', String(form.reading_time));
+        formData.append('category', form.category || '');
+        formData.append('category_color', form.category_color || '#00CFFF');
+        formData.append('category_bg_color', form.category_bg_color || '#0a2a3a');
+        formData.append('description', form.description || '');
+        formData.append('content', form.content || '');
+        formData.append('reading_time', String(form.reading_time || 5));
         if (form.published_at) formData.append('published_at', form.published_at);
         formData.append('is_published', form.is_published ? 'true' : 'false');
 
-        if (coverFile.value) {
+        // Обложка
+        if (coverFile.value && coverFile.value instanceof File) {
             formData.append('cover', coverFile.value);
         }
 
-        if (galleryFiles.value.length) {
+        // Галерея - ВАЖНО: только если есть файлы и они валидные
+        if (galleryFiles.value && galleryFiles.value.length > 0) {
             galleryFiles.value.forEach(file => {
-                formData.append('gallery[]', file);
+                if (file instanceof File && file.size > 0) {
+                    formData.append('gallery[]', file);
+                }
             });
         }
 
+        // Удаление обложки
         if (form.delete_cover) {
             formData.append('delete_cover', 'true');
         }
 
         let response;
         if (isEdit.value && currentId.value) {
-            formData.append('_method', 'PUT');
             response = await articlesAPI.updateWithFiles(currentId.value, formData);
         } else {
             response = await articlesAPI.createWithFiles(formData);
@@ -556,9 +559,11 @@ const submitForm = async () => {
         console.log('Saved article:', response);
         closeModal();
         await fetchItems();
+        alert('Статья успешно сохранена!');
     } catch (error) {
         console.error('Error saving article:', error);
-        alert('Ошибка при сохранении: ' + (error.response?.data?.message || 'Неизвестная ошибка'));
+        const message = error.response?.data?.message || error.message || 'Неизвестная ошибка';
+        alert('Ошибка при сохранении: ' + message);
     } finally {
         saving.value = false;
     }

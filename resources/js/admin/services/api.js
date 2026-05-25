@@ -78,6 +78,19 @@ export const articlesAPI = {
     update: (id, data) => api.put(`/admin/articles/${id}`, normalizeData(data)),
     delete: (id) => api.delete(`/admin/articles/${id}`),
     restore: (id) => api.post(`/admin/articles/${id}/restore`),
+
+    // ДЛЯ ЗАГРУЗКИ ФАЙЛОВ
+    createWithFiles: (formData) => {
+        return api.post('/admin/articles', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+    updateWithFiles: (id, formData) => {
+        formData.append('_method', 'PUT');
+        return api.post(`/admin/articles/${id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
 };
 
 // ========== CONTACTS ==========
