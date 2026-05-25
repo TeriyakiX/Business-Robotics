@@ -244,10 +244,14 @@ const formatNumber = (num) => {
     color: #00CFFF;
 }
 
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .process-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .process-step {
+        min-height: 280px;
     }
 }
 
@@ -258,15 +262,36 @@ const formatNumber = (num) => {
 
     .process-grid {
         grid-template-columns: 1fr 1fr;
+        border-radius: 20px;
     }
 
     .process-step {
-        padding: 28px;
-        min-height: 280px;
+        padding: 22px 20px;
+        min-height: auto;
     }
 
     .process-number {
-        font-size: 44px;
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+
+    .process-title {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .process-description {
+        font-size: 12px;
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+
+    .process-day-wrapper {
+        padding-top: 10px;
+    }
+
+    .process-day {
+        font-size: 12px;
     }
 }
 
@@ -275,16 +300,31 @@ const formatNumber = (num) => {
         padding: 0 16px;
     }
 
-    .process-grid {
-        grid-template-columns: 1fr;
-    }
-
     .section-h {
         font-size: 28px;
     }
 
+    .process-grid {
+        grid-template-columns: 1fr 1fr;
+        border-radius: 18px;
+    }
+
     .process-step {
+        padding: 20px 16px;
         min-height: auto;
+    }
+
+    .process-number {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .process-title {
+        font-size: 0.85rem;
+    }
+
+    .process-description {
+        font-size: 11.5px;
     }
 }
 </style>

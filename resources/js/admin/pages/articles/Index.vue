@@ -40,7 +40,7 @@
                     </select>
                 </div>
             </div>
-            <button @click="openModal" class="br-admin-btn-primary">
+            <button @click="openModal()" class="br-admin-btn-primary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="16"/>
@@ -92,6 +92,10 @@
                 </div>
 
                 <div class="br-admin-card-body">
+                    <!-- Превью обложки в карточке -->
+                    <div v-if="item.cover_url" class="br-admin-card-cover">
+                        <img :src="item.cover_url" :alt="item.title" @error="e => e.target.style.display='none'"/>
+                    </div>
                     <p class="br-admin-description">{{ truncate(item.description, 100) }}</p>
                     <div class="br-admin-stats">
                         <span class="br-admin-stat">
@@ -134,7 +138,7 @@
             </div>
         </div>
 
-        <!-- Modal с Quill редактором и загрузкой изображений -->
+        <!-- Modal -->
         <div v-if="modalOpen" class="br-admin-modal" @click.self="closeModal">
             <div class="br-admin-modal-container br-admin-modal-editor">
                 <div class="br-admin-modal-header">
@@ -146,7 +150,8 @@
                         </svg>
                     </button>
                 </div>
-                <form @submit.prevent="submitForm" class="br-admin-modal-form" enctype="multipart/form-data">
+                <form @submit.prevent="submitForm" class="br-admin-modal-form">
+
                     <!-- Основная информация -->
                     <div class="br-admin-editor-section">
                         <div class="br-admin-section-title">
@@ -158,14 +163,12 @@
                             </svg>
                             Основная информация
                         </div>
-
                         <div class="br-admin-form-row">
                             <div class="br-admin-form-group full-width">
                                 <label>Название статьи *</label>
                                 <input type="text" v-model="form.title" placeholder="Введите заголовок статьи" required/>
                             </div>
                         </div>
-
                         <div class="br-admin-form-row">
                             <div class="br-admin-form-group">
                                 <label>Slug (URL)</label>
@@ -191,7 +194,6 @@
                             </svg>
                             Категория и оформление
                         </div>
-
                         <div class="br-admin-form-row">
                             <div class="br-admin-form-group">
                                 <label>Категория</label>
@@ -214,14 +216,19 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="br-admin-form-group">
                             <label>Фон категории</label>
-                            <div class="br-admin-color-row">
-                                <input type="color" v-model="form.category_bg_color" class="br-admin-color-input"/>
-                                <span class="br-admin-color-preview" :style="{ background: form.category_bg_color }"></span>
-                                <span class="br-admin-color-value">{{ form.category_bg_color }}</span>
-                            </div>
+                            <input
+                                type="text"
+                                v-model="form.category_bg_color"
+                                placeholder="rgba(0, 207, 255, 0.12) или #hex"
+                            />
+                            <div
+                                v-if="form.category_bg_color"
+                                class="br-admin-color-swatch"
+                                :style="{ background: form.category_bg_color }"
+                            ></div>
+                            <span class="br-admin-hint">Формат: rgba(r, g, b, a) или #hex</span>
                         </div>
                     </div>
 
@@ -235,25 +242,64 @@
                             Изображения
                         </div>
 
+                        <!-- Обложка -->
                         <div class="br-admin-form-group">
                             <label>Обложка статьи</label>
-                            <input type="file" @change="handleCoverUpload" accept="image/jpeg,image/png,image/webp" class="br-admin-file-input"/>
+                            <input
+                                type="file"
+                                @change="handleCoverUpload"
+                                accept="image/jpeg,image/png,image/webp,image/avif"
+                                class="br-admin-file-input"
+                            />
                             <div v-if="coverPreview" class="br-admin-image-preview">
-                                <img :src="coverPreview" alt="Preview">
+                                <img :src="coverPreview" alt="Preview" @error="e => e.target.style.display='none'"/>
                                 <button type="button" @click="removeCover" class="br-admin-remove-image">×</button>
                             </div>
                             <span class="br-admin-hint">Рекомендуемый размер: 1200x630px. Максимум 5MB</span>
                         </div>
 
+                        <!-- Галерея -->
                         <div class="br-admin-form-group">
                             <label>Галерея изображений</label>
-                            <input type="file" @change="handleGalleryUpload" multiple accept="image/jpeg,image/png,image/webp" class="br-admin-file-input"/>
-                            <div class="br-admin-gallery-preview" v-if="galleryPreviews.length">
-                                <div v-for="(preview, idx) in galleryPreviews" :key="idx" class="br-admin-gallery-item">
-                                    <img :src="preview" alt="Gallery preview">
-                                    <button type="button" @click="removeGalleryImage(idx)" class="br-admin-remove-image">×</button>
+                            <input
+                                type="file"
+                                @change="handleGalleryUpload"
+                                multiple
+                                accept="image/jpeg,image/png,image/webp,image/avif"
+                                class="br-admin-file-input"
+                                ref="galleryInput"
+                            />
+
+                            <!-- Существующие фото из галереи -->
+                            <div v-if="existingGallery.length > 0" class="br-admin-gallery-section">
+                                <p class="br-admin-gallery-label">Текущие фото:</p>
+                                <div class="br-admin-gallery-preview">
+                                    <div
+                                        v-for="(url, idx) in existingGallery"
+                                        :key="'existing-' + idx"
+                                        class="br-admin-gallery-item"
+                                    >
+                                        <img :src="url" alt="Gallery" @error="e => e.target.style.display='none'"/>
+                                        <button type="button" @click="removeExistingGalleryImage(idx)" class="br-admin-remove-image">×</button>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Новые фото для загрузки -->
+                            <div v-if="newGalleryPreviews.length > 0" class="br-admin-gallery-section">
+                                <p class="br-admin-gallery-label">Новые фото (будут загружены):</p>
+                                <div class="br-admin-gallery-preview">
+                                    <div
+                                        v-for="(preview, idx) in newGalleryPreviews"
+                                        :key="'new-' + idx"
+                                        class="br-admin-gallery-item"
+                                    >
+                                        <img :src="preview" alt="New gallery"/>
+                                        <button type="button" @click="removeNewGalleryImage(idx)" class="br-admin-remove-image">×</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <span class="br-admin-hint">Можно выбрать несколько изображений. Максимум 10 файлов, каждый до 5MB</span>
                         </div>
                     </div>
@@ -270,11 +316,11 @@
                             Краткое описание
                         </div>
                         <div class="br-admin-form-group">
-                            <textarea v-model="form.description" placeholder="Краткое описание для карточки статьи (отображается в списке статей)" rows="3"></textarea>
+                            <textarea v-model="form.description" placeholder="Краткое описание для карточки статьи" rows="3"></textarea>
                         </div>
                     </div>
 
-                    <!-- Полное содержание с Quill -->
+                    <!-- Содержание -->
                     <div class="br-admin-editor-section">
                         <div class="br-admin-section-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -346,14 +392,16 @@ const modalOpen = ref(false);
 const isEdit = ref(false);
 const saving = ref(false);
 const currentId = ref(null);
+const galleryInput = ref(null);
 
-// Данные для изображений
+// Обложка
 const coverFile = ref(null);
-const galleryFiles = ref([]);
 const coverPreview = ref('');
-const galleryPreviews = ref([]);
-const existingCover = ref('');
-const existingGallery = ref([]);
+
+// Галерея разделена на существующие (URL) и новые (File)
+const existingGallery = ref([]);       // URL-строки с сервера
+const newGalleryFiles = ref([]);       // File объекты новых загрузок
+const newGalleryPreviews = ref([]);    // blob URL для превью новых
 
 const filters = reactive({
     search: '',
@@ -366,7 +414,7 @@ const form = reactive({
     slug: '',
     category: '',
     category_color: '#00CFFF',
-    category_bg_color: '#0a2a3a',
+    category_bg_color: 'rgba(0, 207, 255, 0.12)',
     description: '',
     content: '',
     reading_time: 5,
@@ -409,45 +457,53 @@ const truncate = (text, max) => {
 
 const formatDate = (date) => {
     if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+    return new Date(date).toLocaleDateString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
     });
 };
 
-// Методы для работы с изображениями
+// ===== ОБЛОЖКА =====
 const handleCoverUpload = (event) => {
     const file = event.target.files[0];
-    if (file) {
-        coverFile.value = file;
-        coverPreview.value = URL.createObjectURL(file);
-        form.delete_cover = false;
-    }
-};
-
-const handleGalleryUpload = (event) => {
-    const files = Array.from(event.target.files);
-    galleryFiles.value.push(...files);
-    files.forEach(file => {
-        galleryPreviews.value.push(URL.createObjectURL(file));
-    });
+    if (!file) return;
+    coverFile.value = file;
+    coverPreview.value = URL.createObjectURL(file);
+    form.delete_cover = false;
 };
 
 const removeCover = () => {
     coverFile.value = null;
     coverPreview.value = '';
-    if (existingCover.value) {
+    // Если была существующая обложка — помечаем на удаление
+    if (isEdit.value) {
         form.delete_cover = true;
     }
 };
 
-const removeGalleryImage = (index) => {
-    galleryFiles.value.splice(index, 1);
-    galleryPreviews.value.splice(index, 1);
+// ===== ГАЛЕРЕЯ =====
+const handleGalleryUpload = (event) => {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+        newGalleryFiles.value.push(file);
+        newGalleryPreviews.value.push(URL.createObjectURL(file));
+    });
+    // Сбрасываем input чтобы можно было выбрать те же файлы повторно
+    if (galleryInput.value) galleryInput.value.value = '';
 };
 
+// Удалить существующее фото из галереи
+const removeExistingGalleryImage = (idx) => {
+    existingGallery.value.splice(idx, 1);
+};
+
+// Удалить новое фото из очереди загрузки
+const removeNewGalleryImage = (idx) => {
+    URL.revokeObjectURL(newGalleryPreviews.value[idx]);
+    newGalleryFiles.value.splice(idx, 1);
+    newGalleryPreviews.value.splice(idx, 1);
+};
+
+// ===== FETCH =====
 const fetchItems = async () => {
     loading.value = true;
     try {
@@ -465,38 +521,50 @@ const fetchItems = async () => {
     }
 };
 
-const openModal = (item = null) => {
+// ===== OPEN/CLOSE MODAL =====
+const resetModal = () => {
+    coverFile.value = null;
+    coverPreview.value = '';
+    existingGallery.value = [];
+    newGalleryFiles.value = [];
+    newGalleryPreviews.value = [];
+    form.delete_cover = false;
+};
+
+const openModal = async (item = null) => {
+    resetModal();
     isEdit.value = !!item;
 
-    // ПОЛНЫЙ СБРОС ВСЕХ ДАННЫХ
-    coverFile.value = null;
-    galleryFiles.value = [];
-    coverPreview.value = '';
-    galleryPreviews.value = [];
-    existingCover.value = '';
-    existingGallery.value = [];
-    form.delete_cover = false;
-
     if (item) {
-        currentId.value = item.id;
-        form.title = item.title || '';
-        form.slug = item.slug || '';
-        form.category = item.category || '';
-        form.category_color = item.category_color || '#00CFFF';
-        form.category_bg_color = item.category_bg_color || '#0a2a3a';
-        form.description = item.description || '';
-        form.content = item.content || '';
-        form.reading_time = item.reading_time || 5;
-        form.published_at = item.published_at ? item.published_at.split(' ')[0] : '';
-        form.is_published = item.is_published ?? false;
+        modalOpen.value = true;
 
-        if (item.cover_url) {
-            existingCover.value = item.cover_url;
-            coverPreview.value = item.cover_url;
+        // Подгружаем полную статью чтобы получить gallery_urls
+        let fullItem = item;
+        try {
+            const response = await articlesAPI.getById(item.id);
+            fullItem = response.data || response || item;
+        } catch (e) {
+            fullItem = item;
         }
-        if (item.gallery_urls && item.gallery_urls.length) {
-            existingGallery.value = item.gallery_urls;
-            galleryPreviews.value = [...item.gallery_urls];
+
+        currentId.value = fullItem.id;
+        form.title = fullItem.title || '';
+        form.slug = fullItem.slug || '';
+        form.category = fullItem.category || '';
+        form.category_color = fullItem.category_color || '#00CFFF';
+        form.category_bg_color = fullItem.category_bg_color || 'rgba(0, 207, 255, 0.12)';
+        form.description = fullItem.description || '';
+        form.content = fullItem.content || '';
+        form.reading_time = fullItem.reading_time || 5;
+        form.published_at = fullItem.published_at ? fullItem.published_at.split(' ')[0] : '';
+        form.is_published = fullItem.is_published ?? false;
+
+        if (fullItem.cover_url) {
+            coverPreview.value = fullItem.cover_url;
+        }
+
+        if (fullItem.gallery_urls && fullItem.gallery_urls.length) {
+            existingGallery.value = [...fullItem.gallery_urls];
         }
     } else {
         currentId.value = null;
@@ -504,16 +572,22 @@ const openModal = (item = null) => {
         form.slug = '';
         form.category = '';
         form.category_color = '#00CFFF';
-        form.category_bg_color = '#0a2a3a';
+        form.category_bg_color = 'rgba(0, 207, 255, 0.12)';
         form.description = '';
         form.content = '';
         form.reading_time = 5;
         form.published_at = '';
         form.is_published = false;
+        modalOpen.value = true;
     }
-    modalOpen.value = true;
 };
 
+const closeModal = () => {
+    modalOpen.value = false;
+    setTimeout(() => resetModal(), 300);
+};
+
+// ===== SUBMIT =====
 const submitForm = async () => {
     saving.value = true;
     try {
@@ -523,31 +597,33 @@ const submitForm = async () => {
         if (form.slug) formData.append('slug', form.slug);
         formData.append('category', form.category || '');
         formData.append('category_color', form.category_color || '#00CFFF');
-        formData.append('category_bg_color', form.category_bg_color || '#0a2a3a');
+        formData.append('category_bg_color', form.category_bg_color || 'rgba(0, 207, 255, 0.12)');
         formData.append('description', form.description || '');
         formData.append('content', form.content || '');
         formData.append('reading_time', String(form.reading_time || 5));
         if (form.published_at) formData.append('published_at', form.published_at);
         formData.append('is_published', form.is_published ? 'true' : 'false');
 
-        // Обложка
-        if (coverFile.value && coverFile.value instanceof File) {
+        // Обложка — только если новый файл выбран
+        if (coverFile.value instanceof File) {
             formData.append('cover', coverFile.value);
-        }
-
-        // Галерея - ВАЖНО: только если есть файлы и они валидные
-        if (galleryFiles.value && galleryFiles.value.length > 0) {
-            galleryFiles.value.forEach(file => {
-                if (file instanceof File && file.size > 0) {
-                    formData.append('gallery[]', file);
-                }
-            });
         }
 
         // Удаление обложки
         if (form.delete_cover) {
             formData.append('delete_cover', 'true');
         }
+
+        // Галерея — только реально новые File объекты
+        const validNewFiles = newGalleryFiles.value.filter(
+            f => f instanceof File && f.size > 0
+        );
+        if (validNewFiles.length > 0) {
+            validNewFiles.forEach(file => {
+                formData.append('gallery[]', file);
+            });
+        }
+        // Если gallery не отправляется — сервер не трогает существующую галерею
 
         let response;
         if (isEdit.value && currentId.value) {
@@ -556,7 +632,6 @@ const submitForm = async () => {
             response = await articlesAPI.createWithFiles(formData);
         }
 
-        console.log('Saved article:', response);
         closeModal();
         await fetchItems();
         alert('Статья успешно сохранена!');
@@ -569,6 +644,7 @@ const submitForm = async () => {
     }
 };
 
+// ===== DELETE =====
 const deleteItem = async (item) => {
     if (!confirm(`Удалить статью "${item.title}"?`)) return;
     try {
@@ -578,17 +654,6 @@ const deleteItem = async (item) => {
         console.error('Error deleting article:', error);
         alert('Ошибка при удалении');
     }
-};
-
-const closeModal = () => {
-    modalOpen.value = false;
-    // Сброс изображений при закрытии
-    setTimeout(() => {
-        coverFile.value = null;
-        galleryFiles.value = [];
-        coverPreview.value = '';
-        galleryPreviews.value = [];
-    }, 300);
 };
 
 onMounted(() => {
@@ -602,7 +667,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ========== БАЗОВЫЕ СТИЛИ ========== */
 .br-admin-crud {
     max-width: 1400px;
     margin: 0 auto;
@@ -639,10 +703,7 @@ onMounted(() => {
     border-radius: 12px;
 }
 
-.br-admin-filter-group svg {
-    stroke: #5A7A95;
-    flex-shrink: 0;
-}
+.br-admin-filter-group svg { stroke: #5A7A95; flex-shrink: 0; }
 
 .br-admin-filter-group input,
 .br-admin-filter-group select {
@@ -654,15 +715,9 @@ onMounted(() => {
     color: #E8F0F8;
 }
 
-.br-admin-filter-group input::placeholder {
-    color: #5A7A95;
-}
+.br-admin-filter-group input::placeholder { color: #5A7A95; }
+.br-admin-filter-group select option { background: #213349; }
 
-.br-admin-filter-group select option {
-    background: #213349;
-}
-
-/* Primary Button */
 .br-admin-btn-primary {
     display: flex;
     align-items: center;
@@ -702,11 +757,9 @@ onMounted(() => {
     margin-bottom: 16px;
 }
 
-@keyframes br-spin {
-    to { transform: rotate(360deg); }
-}
+@keyframes br-spin { to { transform: rotate(360deg); } }
 
-/* Empty State */
+/* Empty */
 .br-admin-empty {
     text-align: center;
     padding: 60px;
@@ -715,20 +768,9 @@ onMounted(() => {
     border: 1px solid rgba(0, 180, 230, 0.12);
 }
 
-.br-admin-empty svg {
-    stroke: #5A7A95;
-    margin-bottom: 20px;
-}
-
-.br-admin-empty h3 {
-    font-size: 20px;
-    color: #E8F0F8;
-    margin-bottom: 8px;
-}
-
-.br-admin-empty p {
-    color: #94B4CC;
-}
+.br-admin-empty svg { stroke: #5A7A95; margin-bottom: 20px; }
+.br-admin-empty h3 { font-size: 20px; color: #E8F0F8; margin-bottom: 8px; }
+.br-admin-empty p { color: #94B4CC; }
 
 /* Grid */
 .br-admin-items-grid {
@@ -753,7 +795,6 @@ onMounted(() => {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
-/* Card Header */
 .br-admin-card-header {
     padding: 20px 20px 12px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.1);
@@ -769,7 +810,6 @@ onMounted(() => {
     margin: 0 0 8px 0;
 }
 
-/* Article Meta */
 .br-admin-article-meta {
     display: flex;
     gap: 8px;
@@ -793,7 +833,6 @@ onMounted(() => {
     color: #5A7A95;
 }
 
-/* Status Badge */
 .br-admin-status {
     display: inline-flex;
     align-items: center;
@@ -802,6 +841,7 @@ onMounted(() => {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .br-admin-status-dot {
@@ -817,9 +857,7 @@ onMounted(() => {
     border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
-.br-admin-status.active .br-admin-status-dot {
-    background: #34D399;
-}
+.br-admin-status.active .br-admin-status-dot { background: #34D399; }
 
 .br-admin-status.inactive {
     background: rgba(239, 68, 68, 0.15);
@@ -827,14 +865,24 @@ onMounted(() => {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.br-admin-status.inactive .br-admin-status-dot {
-    background: #ef4444;
+.br-admin-status.inactive .br-admin-status-dot { background: #ef4444; }
+
+/* Card cover preview */
+.br-admin-card-cover {
+    margin-bottom: 12px;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-/* Card Body */
-.br-admin-card-body {
-    padding: 16px 20px;
+.br-admin-card-cover img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+    border-radius: 10px;
 }
+
+.br-admin-card-body { padding: 16px 20px; }
 
 .br-admin-description {
     font-size: 13px;
@@ -842,7 +890,6 @@ onMounted(() => {
     line-height: 1.5;
 }
 
-/* Stats */
 .br-admin-stats {
     display: flex;
     gap: 16px;
@@ -859,11 +906,8 @@ onMounted(() => {
     color: #5A7A95;
 }
 
-.br-admin-stat svg {
-    stroke: #5A7A95;
-}
+.br-admin-stat svg { stroke: #5A7A95; }
 
-/* Card Actions */
 .br-admin-card-actions {
     padding: 16px 20px 20px;
     display: flex;
@@ -893,13 +937,8 @@ onMounted(() => {
     border: 1px solid rgba(0, 207, 255, 0.25);
 }
 
-.br-admin-btn-edit svg {
-    stroke: #00CFFF;
-}
-
-.br-admin-btn-edit:hover {
-    background: rgba(0, 207, 255, 0.2);
-}
+.br-admin-btn-edit svg { stroke: #00CFFF; }
+.br-admin-btn-edit:hover { background: rgba(0, 207, 255, 0.2); }
 
 .br-admin-btn-delete {
     background: rgba(239, 68, 68, 0.1);
@@ -907,13 +946,8 @@ onMounted(() => {
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
-.br-admin-btn-delete svg {
-    stroke: #ef4444;
-}
-
-.br-admin-btn-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-}
+.br-admin-btn-delete svg { stroke: #ef4444; }
+.br-admin-btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
 
 /* Modal */
 .br-admin-modal {
@@ -940,19 +974,11 @@ onMounted(() => {
     animation: br-modal-slide 0.3s ease;
 }
 
-.br-admin-modal-editor {
-    max-width: 1200px;
-}
+.br-admin-modal-editor { max-width: 1200px; }
 
 @keyframes br-modal-slide {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .br-admin-modal-header {
@@ -961,6 +987,7 @@ onMounted(() => {
     align-items: center;
     padding: 24px 28px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.12);
+    flex-shrink: 0;
 }
 
 .br-admin-modal-header h2 {
@@ -979,9 +1006,7 @@ onMounted(() => {
     transition: color 0.2s;
 }
 
-.br-admin-modal-close:hover {
-    color: #00CFFF;
-}
+.br-admin-modal-close:hover { color: #00CFFF; }
 
 .br-admin-modal-form {
     padding: 24px 28px;
@@ -989,14 +1014,13 @@ onMounted(() => {
     flex: 1;
 }
 
-/* Editor Sections */
 .br-admin-editor-section {
     margin-bottom: 32px;
     padding-bottom: 24px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.1);
 }
 
-.br-admin-editor-section:last-child {
+.br-admin-editor-section:last-of-type {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
@@ -1014,18 +1038,10 @@ onMounted(() => {
     border-bottom: 1px solid rgba(0, 207, 255, 0.2);
 }
 
-.br-admin-section-title svg {
-    stroke: #00CFFF;
-}
+.br-admin-section-title svg { stroke: #00CFFF; }
 
-/* Form */
-.br-admin-form-group {
-    margin-bottom: 20px;
-}
-
-.br-admin-form-group.full-width {
-    grid-column: span 2;
-}
+.br-admin-form-group { margin-bottom: 20px; }
+.br-admin-form-group.full-width { grid-column: span 2; }
 
 .br-admin-form-group label {
     display: block;
@@ -1046,6 +1062,7 @@ onMounted(() => {
     font-size: 14px;
     color: #E8F0F8;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .br-admin-form-group input:focus,
@@ -1056,9 +1073,7 @@ onMounted(() => {
     box-shadow: 0 0 0 3px rgba(0, 207, 255, 0.1);
 }
 
-.br-admin-form-group select option {
-    background: #213349;
-}
+.br-admin-form-group select option { background: #213349; }
 
 .br-admin-form-row {
     display: grid;
@@ -1076,6 +1091,7 @@ onMounted(() => {
     color: #E8F0F8;
     cursor: pointer;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .br-admin-file-input::-webkit-file-upload-button {
@@ -1089,7 +1105,7 @@ onMounted(() => {
     font-weight: 500;
 }
 
-/* Image Preview */
+/* Image preview */
 .br-admin-image-preview {
     position: relative;
     margin-top: 12px;
@@ -1101,17 +1117,30 @@ onMounted(() => {
     max-height: 150px;
     border-radius: 8px;
     object-fit: cover;
+    display: block;
+}
+
+/* Gallery */
+.br-admin-gallery-section {
+    margin-top: 12px;
+}
+
+.br-admin-gallery-label {
+    font-size: 12px;
+    color: #5A7A95;
+    margin: 0 0 8px 0;
+    font-weight: 500;
 }
 
 .br-admin-gallery-preview {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 12px;
+    gap: 10px;
 }
 
 .br-admin-gallery-item {
     position: relative;
+    flex-shrink: 0;
 }
 
 .br-admin-gallery-item img {
@@ -1119,6 +1148,8 @@ onMounted(() => {
     height: 100px;
     border-radius: 8px;
     object-fit: cover;
+    display: block;
+    border: 1px solid rgba(0, 180, 230, 0.2);
 }
 
 .br-admin-remove-image {
@@ -1136,6 +1167,7 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     font-size: 14px;
+    line-height: 1;
     transition: all 0.2s;
 }
 
@@ -1144,7 +1176,7 @@ onMounted(() => {
     transform: scale(1.1);
 }
 
-/* Color Picker */
+/* Color */
 .br-admin-color-row {
     display: flex;
     align-items: center;
@@ -1156,6 +1188,9 @@ onMounted(() => {
     height: 42px;
     padding: 4px;
     cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 180, 230, 0.22);
+    background: #283D55;
 }
 
 .br-admin-color-preview {
@@ -1163,6 +1198,7 @@ onMounted(() => {
     height: 36px;
     border-radius: 8px;
     border: 1px solid rgba(0, 180, 230, 0.3);
+    flex-shrink: 0;
 }
 
 .br-admin-color-value {
@@ -1171,7 +1207,14 @@ onMounted(() => {
     font-family: monospace;
 }
 
-/* Hints */
+.br-admin-color-swatch {
+    width: 100%;
+    height: 32px;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: 1px solid rgba(0, 180, 230, 0.2);
+}
+
 .br-admin-hint {
     display: block;
     font-size: 11px;
@@ -1179,11 +1222,8 @@ onMounted(() => {
     margin-top: 6px;
 }
 
-/* Status Options */
-.br-admin-status-options {
-    display: flex;
-    gap: 20px;
-}
+/* Status options */
+.br-admin-status-options { display: flex; gap: 20px; }
 
 .br-admin-radio {
     display: flex;
@@ -1194,12 +1234,9 @@ onMounted(() => {
     font-size: 14px;
 }
 
-.br-admin-radio input {
-    width: auto;
-    margin: 0;
-}
+.br-admin-radio input { width: auto; margin: 0; }
 
-/* Modal Footer */
+/* Modal footer */
 .br-admin-modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -1249,40 +1286,14 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .br-admin-filters-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .br-admin-filters {
-        flex-direction: column;
-    }
-
-    .br-admin-filter-group {
-        width: 100%;
-    }
-
+    .br-admin-filters-bar { flex-direction: column; align-items: stretch; }
+    .br-admin-filters { flex-direction: column; }
+    .br-admin-filter-group { width: 100%; }
     .br-admin-filter-group input,
-    .br-admin-filter-group select {
-        min-width: auto;
-        width: 100%;
-    }
-
-    .br-admin-btn-primary {
-        justify-content: center;
-    }
-
-    .br-admin-items-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .br-admin-form-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .br-admin-modal-editor {
-        max-width: 95%;
-    }
+    .br-admin-filter-group select { min-width: auto; width: 100%; }
+    .br-admin-btn-primary { justify-content: center; }
+    .br-admin-items-grid { grid-template-columns: 1fr; }
+    .br-admin-form-row { grid-template-columns: 1fr; gap: 12px; }
+    .br-admin-modal-editor { max-width: 95%; }
 }
 </style>

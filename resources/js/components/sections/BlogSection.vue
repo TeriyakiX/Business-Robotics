@@ -20,17 +20,15 @@
                     @click="openArticleModal(article)"
                 >
                     <img
+                        v-if="article.cover_url"
                         :src="article.cover_url"
                         :alt="article.title"
                         class="blog-card-img"
                         loading="lazy"
-                        @error="e => e.target.src = '/images/placeholder.jpg'"
+                        @error="e => e.target.style.display = 'none'"
                     >
                     <div class="blog-card-content">
-                        <span
-                            class="blog-cat"
-                            :style="{ background: article.category_bg_color || 'rgba(0,207,255,0.08)', color: article.category_color || '#33DAFF' }"
-                        >
+                        <span class="blog-cat">
                             {{ article.category_label || article.category }}
                         </span>
                         <h3 class="blog-title">{{ article.title }}</h3>
@@ -41,7 +39,7 @@
                         </div>
                         <span class="blog-read">
                             Читать далее
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <line x1="5" y1="12" x2="19" y2="12"/>
                                 <polyline points="12 5 19 12 12 19"/>
                             </svg>
@@ -75,30 +73,39 @@
         <Teleport to="body">
             <div v-if="modalOpen" class="blog-modal-overlay" @click="closeModal">
                 <div class="blog-modal-container" @click.stop>
-                    <button @click="closeModal" class="blog-modal-close">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"/>
-                            <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </button>
 
                     <div v-if="modalLoading" class="blog-modal-loading">
                         <div class="blog-modal-spinner"></div>
                     </div>
 
                     <div v-else-if="selectedArticle" class="blog-modal-content">
-                        <img
-                            :src="selectedArticle.cover_url"
-                            :alt="selectedArticle.title"
-                            class="blog-modal-cover"
-                        >
+
+                        <!-- Hero обложка — на весь верх, крестик поверх -->
+                        <div class="blog-modal-hero" :style="selectedArticle.cover_url ? { backgroundImage: `url(${selectedArticle.cover_url})` } : {}">
+                            <div class="blog-modal-hero-blur"></div>
+                            <div class="blog-modal-hero-gradient"></div>
+
+                            <!-- Крестик поверх hero -->
+                            <button @click="closeModal" class="blog-modal-close">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+
+                            <!-- Категория поверх hero -->
+                            <div class="blog-modal-hero-bottom">
+                                <span
+                                    class="blog-modal-category"
+                                    :style="{ background: selectedArticle.category_bg_color || 'rgba(0,207,255,0.12)', color: selectedArticle.category_color || '#00CFFF' }"
+                                >
+                                    {{ selectedArticle.category_label || selectedArticle.category }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Контент -->
                         <div class="blog-modal-inner">
-                            <span
-                                class="blog-modal-category"
-                                :style="{ background: selectedArticle.category_bg_color || 'rgba(0,207,255,0.12)', color: selectedArticle.category_color || '#00CFFF' }"
-                            >
-                                {{ selectedArticle.category_label || selectedArticle.category }}
-                            </span>
                             <h2 class="blog-modal-title">{{ selectedArticle.title }}</h2>
                             <div class="blog-modal-meta">
                                 <span>
@@ -125,6 +132,54 @@
                                     {{ selectedArticle.views_count || 0 }} просмотров
                                 </span>
                             </div>
+
+                            <!-- Слайдер галереи — ДО текста -->
+                            <div
+                                v-if="selectedArticle.gallery_urls && selectedArticle.gallery_urls.length"
+                                class="blog-modal-gallery"
+                            >
+                                <div class="blog-modal-slider">
+                                    <button
+                                        v-if="selectedArticle.gallery_urls.length > 1"
+                                        class="blog-modal-slider-btn blog-modal-slider-prev"
+                                        @click="sliderPrev"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="15 18 9 12 15 6"/>
+                                        </svg>
+                                    </button>
+
+                                    <div class="blog-modal-slider-track">
+                                        <img
+                                            :src="selectedArticle.gallery_urls[sliderIndex]"
+                                            :alt="selectedArticle.title + ' — фото ' + (sliderIndex + 1)"
+                                            class="blog-modal-slider-img"
+                                            @error="e => e.target.style.display = 'none'"
+                                        />
+                                    </div>
+
+                                    <button
+                                        v-if="selectedArticle.gallery_urls.length > 1"
+                                        class="blog-modal-slider-btn blog-modal-slider-next"
+                                        @click="sliderNext"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                    </button>
+
+                                    <div v-if="selectedArticle.gallery_urls.length > 1" class="blog-modal-slider-dots">
+                                        <button
+                                            v-for="(_, idx) in selectedArticle.gallery_urls"
+                                            :key="idx"
+                                            class="blog-modal-slider-dot"
+                                            :class="{ active: idx === sliderIndex }"
+                                            @click="sliderIndex = idx"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="blog-modal-body" v-html="selectedArticle.content"></div>
                         </div>
                     </div>
@@ -154,8 +209,8 @@ const modalOpen = ref(false);
 const modalLoading = ref(false);
 const selectedArticle = ref(null);
 const isMobile = ref(false);
+const sliderIndex = ref(0);
 
-// Количество статей в зависимости от устройства
 const initialLimit = computed(() => isMobile.value ? 3 : 6);
 
 const displayArticles = computed(() => {
@@ -172,16 +227,12 @@ const formatDate = (date) => {
 
 const checkMobile = () => {
     isMobile.value = window.innerWidth < 768;
-    // Если показываем все статьи, не сбрасываем
-    if (!showAll.value) {
-        // Триггерим пересчет displayArticles через обновление
-        // Ничего не делаем, computed сам пересчитается
-    }
 };
 
 const openArticleModal = async (article) => {
     modalOpen.value = true;
     modalLoading.value = true;
+    sliderIndex.value = 0;
 
     try {
         if (article.content) {
@@ -196,6 +247,16 @@ const openArticleModal = async (article) => {
     } finally {
         modalLoading.value = false;
     }
+};
+
+const sliderPrev = () => {
+    const len = selectedArticle.value?.gallery_urls?.length || 0;
+    sliderIndex.value = (sliderIndex.value - 1 + len) % len;
+};
+
+const sliderNext = () => {
+    const len = selectedArticle.value?.gallery_urls?.length || 0;
+    sliderIndex.value = (sliderIndex.value + 1) % len;
 };
 
 const closeModal = () => {
@@ -299,121 +360,102 @@ onUnmounted(() => {
     color: #4E6E88;
 }
 
-/* Blog Grid */
+/* Blog Grid — 3 колонки на десктопе */
 .blog-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 24px;
 }
 
 /* Blog Card */
 .blog-card {
     background: white;
-    border: 1px solid rgba(0, 80, 180, 0.12);
-    border-radius: 14px;
-    box-shadow: 0 2px 20px rgba(0, 40, 120, 0.06);
-    transition: all 0.3s;
+    border: 0.5px solid rgba(0, 80, 180, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0, 40, 120, 0.06);
+    transition: box-shadow 0.25s, border-color 0.25s;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
-
-.blog-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 14px;
-    background: linear-gradient(108deg, transparent 28%, rgba(255, 255, 255, 0.85) 46%, rgba(200, 232, 255, 0.55) 52%, transparent 72%);
-    transform: translateX(-140%) skewX(-15deg);
-    pointer-events: none;
-    z-index: 1;
+    overflow: visible;
+    padding: 12px 16px 0 16px;
 }
 
 .blog-card:hover {
-    border-color: rgba(0, 150, 220, 0.45);
-    box-shadow: 0 16px 48px rgba(0, 80, 200, 0.14);
-    transform: translateY(-4px);
-}
-
-.blog-card:hover::before {
-    animation: shimmer-sweep 0.72s ease forwards;
-}
-
-@keyframes shimmer-sweep {
-    0% { transform: translateX(-140%) skewX(-15deg); }
-    100% { transform: translateX(240%) skewX(-15deg); }
+    border-color: rgba(0, 150, 220, 0.35);
+    box-shadow: 0 8px 32px rgba(0, 80, 200, 0.12);
 }
 
 .blog-card:hover .blog-title {
     color: #004c99;
-    transition: color 0.3s;
 }
 
 .blog-card:hover .blog-read {
-    gap: 9px;
-    transition: gap 0.3s;
+    gap: 8px;
 }
 
+/* Обложка — закруглённая со всех сторон */
 .blog-card-img {
     width: 100%;
-    height: 160px;
+    height: 200px;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease;
+    border-radius: 12px;
 }
 
-.blog-card:hover .blog-card-img {
-    transform: scale(1.04);
-}
-
+/* Контент */
 .blog-card-content {
-    padding: 28px;
+    padding: 16px 8px 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    flex: 1;
 }
 
 .blog-cat {
     display: inline-block;
     width: fit-content;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 5px 12px;
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
+    background: rgba(0, 95, 170, 0.10);
+    color: #005FAA;
 }
 
 .blog-title {
     font-weight: 700;
-    font-size: 1rem;
-    line-height: 1.45;
+    font-size: 17px;
+    line-height: 1.4;
     color: #0C1B2E;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin: 0;
+    transition: color 0.2s;
 }
 
 .blog-desc {
     font-size: 13px;
-    line-height: 1.65;
+    line-height: 1.55;
     color: #4E6E88;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin: 0;
 }
 
 .blog-meta {
     display: flex;
-    gap: 16px;
+    gap: 14px;
     font-size: 12px;
     color: #7A9AB5;
-    padding-top: 12px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-top: 8px;
+    border-top: 0.5px solid rgba(0, 80, 180, 0.1);
     margin-top: auto;
 }
 
@@ -423,14 +465,15 @@ onUnmounted(() => {
     color: #005FAA;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    transition: gap 0.3s;
+    gap: 5px;
+    transition: gap 0.25s;
+    margin-top: 2px;
 }
 
 /* Blog More Button */
 .blog-more {
     text-align: center;
-    margin-top: 36px;
+    margin-top: 48px;
 }
 
 .blog-more-btn {
@@ -445,7 +488,7 @@ onUnmounted(() => {
     font-weight: 500;
     padding: 14px 36px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s;
 }
 
 .blog-more-btn:hover {
@@ -465,8 +508,8 @@ onUnmounted(() => {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(7, 16, 29, 0.9);
-    backdrop-filter: blur(15px);
+    background: rgba(7, 16, 29, 0.92);
+    backdrop-filter: blur(16px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -476,45 +519,97 @@ onUnmounted(() => {
 
 .blog-modal-container {
     position: relative;
-    max-width: 900px;
+    max-width: 860px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    background: #213349;
+    background: #182C3E;
     border-radius: 24px;
-    border: 1px solid rgba(0, 207, 255, 0.35);
-    box-shadow: 0 0 0 1px rgba(0, 207, 255, 0.12), 0 32px 80px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 207, 255, 0.2);
+    box-shadow: 0 0 0 1px rgba(0, 207, 255, 0.08), 0 40px 100px rgba(0, 0, 0, 0.6);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 207, 255, 0.2) transparent;
 }
 
+/* Hero обложка */
+.blog-modal-hero {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background-size: cover;
+    background-position: center;
+    background-color: #0D1E30;
+    border-radius: 24px 24px 0 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.blog-modal-hero-blur {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(0px);
+}
+
+.blog-modal-hero-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(7, 16, 29, 0.15) 0%,
+        rgba(7, 16, 29, 0.05) 40%,
+        rgba(24, 44, 62, 0.85) 100%
+    );
+}
+
+/* Крестик поверх hero */
 .blog-modal-close {
-    position: sticky;
+    position: absolute;
     top: 16px;
     right: 16px;
-    float: right;
-    width: 40px;
-    height: 40px;
-    margin: 16px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 38px;
+    height: 38px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 20;
     transition: all 0.2s;
+    backdrop-filter: blur(6px);
 }
 
-.blog-modal-close svg {
-    stroke: white;
-}
+.blog-modal-close svg { stroke: white; }
 
 .blog-modal-close:hover {
-    background: rgba(239, 68, 68, 0.8);
+    background: rgba(239, 68, 68, 0.75);
     border-color: rgba(239, 68, 68, 0.5);
+    transform: scale(1.08);
 }
 
-/* Modal Loading */
+/* Категория внизу hero */
+.blog-modal-hero-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 28px;
+    z-index: 10;
+}
+
+.blog-modal-category {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+}
+
+/* Loading */
 .blog-modal-loading {
     display: flex;
     justify-content: center;
@@ -531,48 +626,28 @@ onUnmounted(() => {
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Modal Content */
-.blog-modal-content {
-    clear: both;
-}
-
-.blog-modal-cover {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-}
+.blog-modal-content { }
 
 .blog-modal-inner {
-    padding: 32px 40px;
-}
-
-.blog-modal-category {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 20px;
+    padding: 28px 36px 36px;
 }
 
 .blog-modal-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #E8F0F8;
-    margin-bottom: 16px;
+    margin: 0 0 16px 0;
     line-height: 1.3;
 }
 
 .blog-modal-meta {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     flex-wrap: wrap;
     padding-bottom: 20px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.1);
 }
 
@@ -584,9 +659,7 @@ onUnmounted(() => {
     color: #94B4CC;
 }
 
-.blog-modal-meta svg {
-    stroke: #5A7A95;
-}
+.blog-modal-meta svg { stroke: #5A7A95; }
 
 .blog-modal-body {
     color: #94B4CC;
@@ -603,20 +676,12 @@ onUnmounted(() => {
     margin-bottom: 0.5em;
 }
 
-.blog-modal-body :deep(p) {
-    margin-bottom: 1.25em;
-}
+.blog-modal-body :deep(p) { margin-bottom: 1.25em; }
 
-.blog-modal-body :deep(a) {
-    color: #00CFFF;
-    text-decoration: underline;
-}
+.blog-modal-body :deep(a) { color: #00CFFF; text-decoration: underline; }
 
 .blog-modal-body :deep(ul),
-.blog-modal-body :deep(ol) {
-    margin: 1em 0;
-    padding-left: 1.5em;
-}
+.blog-modal-body :deep(ol) { margin: 1em 0; padding-left: 1.5em; }
 
 .blog-modal-body :deep(blockquote) {
     border-left: 3px solid #00CFFF;
@@ -631,16 +696,101 @@ onUnmounted(() => {
     margin: 1em 0;
 }
 
-/* Responsive */
+/* Галерея — слайдер */
+.blog-modal-gallery {
+    margin-bottom: 28px;
+}
+
+.blog-modal-slider {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0D1E30;
+}
+
+.blog-modal-slider-track {
+    width: 100%;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.blog-modal-slider-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.3s;
+}
+
+.blog-modal-slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s;
+    backdrop-filter: blur(6px);
+}
+
+.blog-modal-slider-btn svg { stroke: white; }
+
+.blog-modal-slider-btn:hover {
+    background: rgba(0, 207, 255, 0.3);
+    border-color: rgba(0, 207, 255, 0.5);
+}
+
+.blog-modal-slider-prev { left: 14px; }
+.blog-modal-slider-next { right: 14px; }
+
+.blog-modal-slider-dots {
+    position: absolute;
+    bottom: 14px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    z-index: 10;
+}
+
+.blog-modal-slider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.blog-modal-slider-dot.active {
+    background: #00CFFF;
+    transform: scale(1.25);
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 }
 
 @media (max-width: 768px) {
     .blog-section {
-        padding: 80px 0;
+        padding: 60px 0;
     }
 
     .blog-grid {
@@ -648,24 +798,46 @@ onUnmounted(() => {
         gap: 16px;
     }
 
+    .blog-card {
+        padding: 10px 14px 0 14px;
+    }
+
+    .blog-card-img {
+        height: 180px;
+        border-radius: 10px;
+    }
+
     .blog-card-content {
-        padding: 20px;
+        padding: 14px 6px 18px;
+    }
+
+    .blog-title {
+        font-size: 16px;
+    }
+
+    .blog-desc {
+        font-size: 13px;
+        -webkit-line-clamp: 3;
     }
 
     .blog-modal-inner {
-        padding: 24px;
+        padding: 20px;
     }
 
     .blog-modal-title {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
     }
 
-    .blog-modal-cover {
-        height: 200px;
+    .blog-modal-hero {
+        height: 220px;
     }
 
     .blog-modal-meta {
-        gap: 16px;
+        gap: 14px;
+    }
+
+    .blog-modal-slider-track {
+        height: 220px;
     }
 }
 
@@ -676,6 +848,19 @@ onUnmounted(() => {
 
     .section-h {
         font-size: 28px;
+    }
+
+    .blog-card-img {
+        height: 160px;
+        border-radius: 8px;
+    }
+
+    .blog-card-content {
+        padding: 12px 6px 16px;
+    }
+
+    .blog-title {
+        font-size: 15px;
     }
 
     .blog-modal-inner {

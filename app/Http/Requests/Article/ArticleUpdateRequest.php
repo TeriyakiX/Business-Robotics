@@ -54,27 +54,36 @@ final class ArticleUpdateRequest extends FormRequest
             $data['delete_cover'] = $deleteCover;
         }
 
+        // Если gallery[] пришёл пустым массивом — убираем его совсем,
+        // чтобы Laravel не пытался валидировать пустые элементы
+        if ($this->has('gallery')) {
+            $gallery = $this->file('gallery');
+            if (empty($gallery)) {
+                $data['gallery'] = null;
+            }
+        }
+
         $this->merge($data);
     }
 
     public function rules(): array
     {
         return [
-            'slug' => ['nullable', 'string', 'max:255'],
-            'title' => ['nullable', 'string', 'max:500'],
-            'category' => ['nullable', 'string', Rule::in(array_column(ArticleCategoryEnum::cases(), 'value'))],
-            'category_color' => ['nullable', 'string', 'max:20'],
-            'category_bg_color' => ['nullable', 'string', 'max:50'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'content' => ['nullable', 'string'],
-            'reading_time' => ['nullable', 'integer', 'min:1', 'max:60'],
-            'published_at' => ['nullable', 'date'],
-            'is_published' => ['nullable', 'boolean'],
-            'increment_views' => ['nullable', 'boolean'],
-            'cover' => ['nullable', 'file','mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
-            'gallery.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
-            'gallery' => ['nullable', 'array', 'max:10'],
-            'delete_cover' => ['nullable', 'boolean'],
+            'slug'             => ['nullable', 'string', 'max:255'],
+            'title'            => ['nullable', 'string', 'max:500'],
+            'category'         => ['nullable', 'string', Rule::in(array_column(ArticleCategoryEnum::cases(), 'value'))],
+            'category_color'   => ['nullable', 'string', 'max:50'],
+            'category_bg_color'=> ['nullable', 'string', 'max:100'],
+            'description'      => ['nullable', 'string', 'max:500'],
+            'content'          => ['nullable', 'string'],
+            'reading_time'     => ['nullable', 'integer', 'min:1', 'max:60'],
+            'published_at'     => ['nullable', 'date'],
+            'is_published'     => ['nullable', 'boolean'],
+            'increment_views'  => ['nullable', 'boolean'],
+            'cover'            => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
+            'gallery'          => ['nullable', 'array', 'max:10'],
+            'gallery.*'        => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
+            'delete_cover'     => ['nullable', 'boolean'],
         ];
     }
 
@@ -82,21 +91,34 @@ final class ArticleUpdateRequest extends FormRequest
     {
         $category = $this->input('category');
 
+        // Берём только реальные файлы из gallery
+        $galleryFiles = $this->file('gallery');
+        $gallery = null;
+        if (!empty($galleryFiles)) {
+            $gallery = array_values(array_filter(
+                is_array($galleryFiles) ? $galleryFiles : [$galleryFiles],
+                fn($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid()
+            ));
+            if (empty($gallery)) {
+                $gallery = null;
+            }
+        }
+
         return new ArticleUpdateDto(
-            slug: $this->input('slug'),
-            title: $this->input('title'),
-            category: $category && $category !== '' ? ArticleCategoryEnum::tryFrom($category) : null,
-            category_color: $this->input('category_color'),
+            slug:              $this->input('slug'),
+            title:             $this->input('title'),
+            category:          $category && $category !== '' ? ArticleCategoryEnum::tryFrom($category) : null,
+            category_color:    $this->input('category_color'),
             category_bg_color: $this->input('category_bg_color'),
-            description: $this->input('description'),
-            content: $this->input('content'),
-            reading_time: $this->input('reading_time'),
-            published_at: $this->input('published_at'),
-            is_published: $this->input('is_published'),
-            increment_views: $this->input('increment_views'),
-            cover: $this->file('cover'),
-            gallery: $this->file('gallery'),
-            delete_cover: $this->input('delete_cover', false),
+            description:       $this->input('description'),
+            content:           $this->input('content'),
+            reading_time:      $this->input('reading_time'),
+            published_at:      $this->input('published_at'),
+            is_published:      $this->input('is_published'),
+            increment_views:   $this->input('increment_views'),
+            cover:             $this->file('cover'),
+            gallery:           $gallery,
+            delete_cover:      $this->input('delete_cover', false),
         );
     }
 }

@@ -11,14 +11,6 @@ use Illuminate\Support\Str;
 
 final class ArticleSeeder extends Seeder
 {
-    // Список доступных изображений (1-20.avif)
-    private const array IMAGES = [
-        '1.avif', '2.avif', '3.avif', '4.avif', '5.avif',
-        '6.avif', '7.avif', '8.avif', '9.avif', '10.avif',
-        '11.avif', '12.avif', '13.avif', '14.avif', '15.avif',
-        '16.avif', '17.avif', '18.avif', '19.avif', '20.avif'
-    ];
-
     // Цвета для категорий
     private const array CATEGORY_COLORS = [
         ArticleCategoryEnum::AUTOMATION->value => ['color' => '#00CFFF', 'bg' => 'rgba(0, 207, 255, 0.12)'],
@@ -37,6 +29,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AUTOMATION,
                 'description' => 'Голосовые AI-агенты берут на себя до 80% входящих звонков, освобождая операторов для сложных задач. Разбираем, как внедрить и считать ROI.',
                 'reading_time' => 7,
+                'cover' => '1.avif',
                 'content' => $this->getArticleContent1(),
             ],
             [
@@ -44,6 +37,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
                 'description' => 'Чем отличаются голосовые боты от простых IVR, какие технологии лежат в основе и как выбрать решение под конкретный бизнес — подробный разбор.',
                 'reading_time' => 8,
+                'cover' => '2.avif',
                 'content' => $this->getArticleContent2(),
             ],
             [
@@ -51,6 +45,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
                 'description' => 'AI-агент, интегрированный в CRM, самостоятельно обзванивает новые заявки за 30 секунд, квалифицирует лид и создаёт сделку. Без участия менеджера.',
                 'reading_time' => 6,
+                'cover' => '3.avif',
                 'content' => $this->getArticleContent3(),
             ],
             [
@@ -58,6 +53,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::HR_AUTOMATION,
                 'description' => 'AI-агент для HR заменяет куратора на этапе онбординга: обучает по скриптам, тестирует знания и фиксирует прогресс. Экономия — до 70% времени HR-отдела.',
                 'reading_time' => 6,
+                'cover' => '4.avif',
                 'content' => $this->getArticleContent4(),
             ],
             [
@@ -65,6 +61,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::CASE,
                 'description' => 'Реальный кейс внедрения AI-уведомлений в медицинском центре: автоматические подтверждения записей, перенос слотов и напоминания снизили неявки с 22% до 7,7%.',
                 'reading_time' => 5,
+                'cover' => '5.avif',
                 'content' => $this->getArticleContent5(),
             ],
             [
@@ -72,6 +69,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::ROBOTS,
                 'description' => 'Atlas, Optimus, Figure 02, Unitree H1, Agility Digit, Apptronik Apollo и Fourier GR-1 — сравниваем характеристики, цены и реальные кейсы применения.',
                 'reading_time' => 9,
+                'cover' => '6.avif',
                 'content' => $this->getArticleContent6(),
             ],
             [
@@ -79,6 +77,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AUTOMATION,
                 'description' => 'AI-LeadGen звонит базе из 10 000 контактов за один день, квалифицирует лиды и передаёт горячих клиентов менеджерам. Разбираем механику и результаты.',
                 'reading_time' => 6,
+                'cover' => '7.avif',
                 'content' => $this->getArticleContent7(),
             ],
             [
@@ -86,6 +85,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
                 'description' => 'Пошаговая методика расчёта возврата инвестиций от AI-автоматизации. Реальные цифры, формулы и типичные ошибки при оценке эффекта.',
                 'reading_time' => 7,
+                'cover' => '8.avif',
                 'content' => $this->getArticleContent8(),
             ],
             [
@@ -93,6 +93,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::ROBOTS,
                 'description' => 'Коллаборативные роботы, автономные мобильные платформы и AI-зрение меняют промышленность. Разбираем тренды, которые определят следующие 5 лет.',
                 'reading_time' => 8,
+                'cover' => '9.avif',
                 'content' => $this->getArticleContent9(),
             ],
             [
@@ -100,6 +101,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AUTOMATION,
                 'description' => 'AI-агент принимает звонки, ведёт запись, переносит слоты и напоминает о визите. Сравниваем с традиционным администратором по стоимости и качеству.',
                 'reading_time' => 6,
+                'cover' => '10.avif',
                 'content' => $this->getArticleContent10(),
             ],
             [
@@ -107,6 +109,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
                 'description' => 'Обзвон базы, квалификация лидов, напоминания, онбординг, сбор NPS — разбираем 10 бизнес-задач, в которых AI уже превосходит человека по скорости и стоимости.',
                 'reading_time' => 7,
+                'cover' => '11.avif',
                 'content' => $this->getArticleContent11(),
             ],
             [
@@ -114,6 +117,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::TECHNOLOGY,
                 'description' => 'LLM перестали быть игрушкой для стартапов. Разбираем, как крупные компании встраивают GPT-4o, Claude и Gemini в реальные бизнес-процессы.',
                 'reading_time' => 8,
+                'cover' => '12.avif',
                 'content' => $this->getArticleContent12(),
             ],
             [
@@ -121,6 +125,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::CASE,
                 'description' => 'Как автоматические голосовые напоминания за 2 часа до тренировки снизили пропуски вдвое и вернули 42% клиентов, переставших ходить на занятия.',
                 'reading_time' => 5,
+                'cover' => '13.avif',
                 'content' => $this->getArticleContent13(),
             ],
             [
@@ -128,6 +133,7 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::TECHNOLOGY,
                 'description' => 'Автономные мобильные роботы, роботы-грузчики и системы компьютерного зрения делают современный склад практически безлюдным. Что это значит для бизнеса.',
                 'reading_time' => 7,
+                'cover' => '14.avif',
                 'content' => $this->getArticleContent14(),
             ],
             [
@@ -135,19 +141,19 @@ final class ArticleSeeder extends Seeder
                 'category' => ArticleCategoryEnum::TECHNOLOGY,
                 'description' => 'Автоматизация уничтожает одни профессии и создаёт другие. Разбираем, какие навыки защитят от замены роботом и как бизнесу перестроить команду.',
                 'reading_time' => 9,
+                'cover' => '15.avif',
                 'content' => $this->getArticleContent15(),
             ],
         ];
 
         foreach ($articles as $article) {
-            // Рандомное изображение из списка
-            $randomImage = self::IMAGES[array_rand(self::IMAGES)];
             $categoryValue = $article['category']->value;
+            $slug = Str::slug($article['title']);
 
             Article::query()->updateOrCreate(
-                ['slug' => Str::slug($article['title'])],
+                [Article::SLUG => $slug],
                 [
-                    Article::SLUG => Str::slug($article['title']),
+                    Article::SLUG => $slug,
                     Article::TITLE => $article['title'],
                     Article::CATEGORY => $article['category'],
                     Article::CATEGORY_COLOR => self::CATEGORY_COLORS[$categoryValue]['color'],
@@ -158,7 +164,7 @@ final class ArticleSeeder extends Seeder
                     Article::PUBLISHED_AT => now(),
                     Article::IS_PUBLISHED => true,
                     Article::VIEWS_COUNT => rand(100, 5000),
-                    Article::COVER_PATH => 'images/' . $randomImage, // Путь к изображению
+                    Article::COVER_PATH => 'images/' . $article['cover'],
                 ]
             );
         }

@@ -20,8 +20,8 @@ final class ArticleListResource extends JsonResource
             'category_label' => $this->category?->label(),
             'category_color' => $this->category_color,
             'category_bg_color' => $this->category_bg_color,
-            'content' => $this->content,
             'description' => $this->description,
+            'content' => $this->content,
             'reading_time' => $this->reading_time,
             'published_at' => $this->published_at?->format('Y-m-d H:i:s'),
             'views_count' => $this->views_count,
@@ -29,6 +29,7 @@ final class ArticleListResource extends JsonResource
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
             'cover_url' => $this->cover_url,
+            'gallery_urls' => $this->gallery_urls,
         ];
     }
 }
