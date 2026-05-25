@@ -48,6 +48,11 @@ final class SettingsController extends Controller
 
     public function updateHeroWithFiles(Request $request): JsonResponse
     {
+        \Log::info('=== UPDATE HERO WITH FILES ===');
+        \Log::info('Files:', array_keys($request->allFiles()));
+        \Log::info('Has background: ' . ($request->hasFile('hero_background') ? 'yes' : 'no'));
+        \Log::info('Has media: ' . ($request->hasFile('hero_media') ? 'yes' : 'no'));
+
         $textData = [
             'hero_title_line_1' => $request->input('hero_title_line_1'),
             'hero_title_line_2' => $request->input('hero_title_line_2'),
@@ -57,11 +62,17 @@ final class SettingsController extends Controller
             'hero_use_spline' => $request->input('hero_use_spline') === 'true' ? 'true' : 'false',
         ];
 
+        \Log::info('Text data:', $textData);
+
         $this->service->updateHeroWithFiles(
             $textData,
             $request->file('hero_background'),
             $request->file('hero_media')
         );
+
+        // Проверяем что сохранилось
+        $saved = $this->service->getAll();
+        \Log::info('After save - hero_background:', [$saved['hero']['hero_background'] ?? null]);
 
         return response()->json(['success' => true, 'message' => 'Настройки героя обновлены']);
     }

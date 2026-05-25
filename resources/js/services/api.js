@@ -141,7 +141,15 @@ export const settingsAPI = {
     updateContactForm: (data) => api.post('/admin/settings/contact-form', data),
     updateFooter: (data) => api.post('/admin/settings/footer', data),
     updateContacts: (data) => api.post('/admin/settings/contacts', data),
-    updateHeroWithFiles: (formData) => api.post('/admin/settings/hero-with-files', formData),
+
+    // ⚠️ ВАЖНО: для загрузки файлов нужно указать заголовок
+    updateHeroWithFiles: (formData) => {
+        return api.post('/admin/settings/hero-with-files', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    },
     updateSocials: (data) => api.post('/admin/settings/socials', data),
 };
 

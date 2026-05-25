@@ -301,21 +301,47 @@ const removeSocial = (index) => socials.value.splice(index, 1);
 const saveHero = async () => {
     saving.value = true;
     const formData = new FormData();
+
+    // Текстовые поля
     formData.append('hero_title_line_1', form.hero_title_line_1 || '');
     formData.append('hero_title_line_2', form.hero_title_line_2 || '');
     formData.append('hero_title_line_3', form.hero_title_line_3 || '');
     formData.append('hero_eyebrow', form.hero_eyebrow || '');
     formData.append('hero_button_text', form.hero_button_text || '');
     formData.append('hero_use_spline', form.hero_use_spline ? 'true' : 'false');
-    if (backgroundFile.value) formData.append('hero_background', backgroundFile.value);
-    if (mediaFile.value) formData.append('hero_media', mediaFile.value);
+
+    // Файлы
+    if (backgroundFile.value) {
+        formData.append('hero_background', backgroundFile.value);
+        console.log('📸 Добавлен файл фона:', backgroundFile.value.name);
+    }
+    if (mediaFile.value) {
+        formData.append('hero_media', mediaFile.value);
+        console.log('🎬 Добавлен медиа файл:', mediaFile.value.name);
+    }
+
+    // Логируем содержимое FormData
+    console.log('📦 FormData содержимое:');
+    for (let pair of formData.entries()) {
+        console.log('  ', pair[0], '=', pair[1] instanceof File ? pair[1].name : pair[1]);
+    }
+
     try {
-        await settingsAPI.updateHeroWithFiles(formData);
+        const response = await settingsAPI.updateHeroWithFiles(formData);
+        console.log('✅ Ответ:', response);
         alert('Настройки героя сохранены!');
-        backgroundFile.value = null; mediaFile.value = null; backgroundPreview.value = '';
+
+        backgroundFile.value = null;
+        mediaFile.value = null;
+        backgroundPreview.value = '';
+
         await loadSettings();
-    } catch (error) { console.error(error); alert('Ошибка при сохранении'); }
-    finally { saving.value = false; }
+    } catch (error) {
+        console.error('❌ Ошибка:', error);
+        alert('Ошибка при сохранении: ' + (error.response?.data?.message || error.message));
+    } finally {
+        saving.value = false;
+    }
 };
 
 const saveSettings = async () => {
