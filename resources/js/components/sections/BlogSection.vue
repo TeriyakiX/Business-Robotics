@@ -191,11 +191,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-import { ArticleAPI } from '@/services/api';
 
 dayjs.locale('ru');
+
+const router = useRouter();
 
 const props = defineProps({
     articles: {
@@ -229,24 +231,8 @@ const checkMobile = () => {
     isMobile.value = window.innerWidth < 768;
 };
 
-const openArticleModal = async (article) => {
-    modalOpen.value = true;
-    modalLoading.value = true;
-    sliderIndex.value = 0;
-
-    try {
-        if (article.content) {
-            selectedArticle.value = article;
-        } else {
-            const response = await ArticleAPI.getBySlug(article.slug);
-            selectedArticle.value = response.data || response;
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки статьи:', error);
-        selectedArticle.value = article;
-    } finally {
-        modalLoading.value = false;
-    }
+const openArticleModal = (article) => {
+    router.push('/blog/' + article.slug);
 };
 
 const sliderPrev = () => {

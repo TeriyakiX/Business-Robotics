@@ -10,9 +10,12 @@ use App\Http\Requests\Article\ArticleListRequest;
 use App\Http\Requests\Article\ArticleUpdateRequest;
 use App\Http\Resources\Article\ArticleFullResource;
 use App\Http\Resources\Article\ArticleListResource;
+use App\Jobs\GenerateArticleJob;
 use App\Services\Article\ArticleService;
 use App\Traits\HandlesApiResponsesTrait;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ArticleController extends Controller
@@ -22,7 +25,6 @@ final class ArticleController extends Controller
     public function __construct(
         private readonly ArticleService $service,
     ) {}
-
 
     public function list(ArticleListRequest $request): JsonResponse
     {
@@ -71,7 +73,6 @@ final class ArticleController extends Controller
         );
     }
 
-
     public function create(ArticleCreateRequest $request): JsonResponse
     {
         return $this->executeAction(
@@ -103,5 +104,55 @@ final class ArticleController extends Controller
             action: fn() => $this->service->restore($id),
             successMessageKey: 'article.restore'
         );
+    }
+
+    /**
+     * Получить сохранённый промпт и категорию
+     * GET /admin/articles/generation-settings
+     */
+    public function getGenerationSettings(): JsonResponse
+    {
+        $settings = DB::table('settings')
+            ->whereIn('key', ['article_generation_prompt', 'article_generation_category'])
+            ->pluck('value', 'key');
+
+        return response()->json([
+            'success' => true,
+            'prompt' => $settings['article_generation_prompt'] ?? '',
+            'category' => $settings['article_generation_category'] ?? 'technology',
+        ]);
+    }
+
+    /**
+     * Мгновенная генерация статьи через Claude API
+     * POST /admin/articles/generate
+     */
+    public function generate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'prompt' => 'required|string|min:10|max:1000',
+            'category' => 'nullable|string',
+        ]);
+
+        $prompt = $request->input('prompt');
+        $category = $request->input('category', 'technology');
+
+        // Сохраняем промпт и категорию в settings для планировщика
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'article_generation_prompt'],
+            ['group' => 'general', 'value' => $prompt, 'type' => 'text', 'updated_at' => now(), 'created_at' => now()]
+        );
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'article_generation_category'],
+            ['group' => 'general', 'value' => $category, 'type' => 'text', 'updated_at' => now(), 'created_at' => now()]
+        );
+
+        // Диспатчим Job
+        GenerateArticleJob::dispatch($prompt, $category);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Генерация запущена. Статья появится в списке через 30–60 секунд.',
+        ]);
     }
 }

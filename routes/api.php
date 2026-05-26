@@ -67,6 +67,8 @@ Route::prefix('v1')->group(function () {
 
         // Articles CRUD
         Route::get('/articles', [ArticleController::class, 'list']);
+        Route::get('/articles/generation-settings', [ArticleController::class, 'getGenerationSettings']);
+        Route::post('/articles/generate', [ArticleController::class, 'generate']);
         Route::get('/articles/{id}', [ArticleController::class, 'item']);
         Route::post('/articles', [ArticleController::class, 'create']);
         Route::put('/articles/{id}', [ArticleController::class, 'update']);
@@ -125,6 +127,7 @@ Route::prefix('v1')->group(function () {
 
         // Отдельные методы для каждой группы
         Route::post('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/settings/socials-with-icons', [SettingsController::class, 'updateSocialsWithIcons']);
         Route::post('/settings/cta', [SettingsController::class, 'update']);
         Route::post('/settings/contact-form', [SettingsController::class, 'update']);
         Route::post('/settings/footer', [SettingsController::class, 'update']);

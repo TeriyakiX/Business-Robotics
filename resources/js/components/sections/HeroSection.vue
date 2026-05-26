@@ -28,11 +28,6 @@
 
         <div class="hero-overlay"></div>
 
-        <!-- Левый верхний текст (из настроек) -->
-        <div class="hero-top-left">
-            <p class="hero-top-text">{{ settingsStore.hero.hero_top_text || 'Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных.' }}</p>
-        </div>
-
         <svg class="spotlight" width="900" height="900" viewBox="0 0 900 900" fill="none">
             <g filter="url(#sf)">
                 <ellipse cx="200" cy="100" rx="500" ry="160" transform="rotate(-45 200 100)" fill="white" fill-opacity="0.06"/>
@@ -53,7 +48,7 @@
             </h1>
             <div class="hero-cta">
                 <button @click="$emit('open-contact')" class="hero-btn">
-                    {{ settingsStore.hero.hero_button_text }}
+                    <span class="hero-btn-text">{{ settingsStore.hero.hero_button_text }}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14m-7-7 7 7-7 7"/>
                     </svg>
@@ -78,7 +73,6 @@ defineEmits(['open-contact']);
 const settingsStore = useSettingsStore();
 const showScrollHint = ref(true);
 
-// Получаем URL фона с правильным путем
 const backgroundUrl = computed(() => {
     const bg = settingsStore.hero.hero_background;
     if (!bg) return null;
@@ -87,7 +81,6 @@ const backgroundUrl = computed(() => {
     return `/storage/${bg}`;
 });
 
-// Получаем URL медиа (видео/гиф)
 const mediaUrl = computed(() => {
     const media = settingsStore.hero.hero_media;
     if (!media) return null;
@@ -96,7 +89,6 @@ const mediaUrl = computed(() => {
     return `/storage/${media}`;
 });
 
-// Тип медиа
 const mediaType = computed(() => settingsStore.hero.hero_media_type || 'image');
 
 const handleScroll = () => {
@@ -170,38 +162,6 @@ onUnmounted(() => {
     background: rgba(0, 0, 0, 0.28);
 }
 
-/* ========== ЛЕВЫЙ ВЕРХНИЙ УГОЛ ========== */
-.hero-top-left {
-    position: absolute;
-    top: 120px;
-    left: 80px;
-    z-index: 3;
-    max-width: 380px;
-    background: rgba(13, 30, 48, 0.6);
-    backdrop-filter: blur(12px);
-    padding: 16px 24px;
-    border-radius: 16px;
-    border-left: 3px solid #00CFFF;
-    animation: fadeInLeft 0.8s ease-out 0.3s forwards;
-    opacity: 0;
-    transform: translateX(-20px);
-}
-
-.hero-top-text {
-    font-size: 14px;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
-    letter-spacing: 0.01em;
-}
-
-@keyframes fadeInLeft {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
 .spotlight {
     position: absolute;
     top: -40px;
@@ -213,14 +173,8 @@ onUnmounted(() => {
 }
 
 @keyframes spotlightFadeIn {
-    0% {
-        opacity: 0;
-        transform: translate(-72%, -62%) scale(0.5);
-    }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -40%) scale(1);
-    }
+    0%   { opacity: 0; transform: translate(-72%, -62%) scale(0.5); }
+    100% { opacity: 1; transform: translate(-50%, -40%) scale(1); }
 }
 
 .hero-content {
@@ -278,7 +232,7 @@ onUnmounted(() => {
 }
 
 @keyframes shine-sweep {
-    0% { background-position: 200% center; }
+    0%   { background-position: 200% center; }
     100% { background-position: -200% center; }
 }
 
@@ -286,26 +240,69 @@ onUnmounted(() => {
     margin-top: 40px;
 }
 
+/* ========== КНОПКА С ПЕРЕЛИВАНИЕМ ========== */
 .hero-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: white;
-    color: #07101D;
-    font-weight: 500;
-    font-size: 1rem;
     padding: 14px 32px;
     border-radius: 999px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 1rem;
+    overflow: hidden;
+    color: #07101D;
+    background: linear-gradient(
+        90deg,
+        #ffffff 0%,
+        #d0f4ff 15%,
+        #00CFFF 35%,
+        #80e8ff 50%,
+        #00CFFF 65%,
+        #d0f4ff 85%,
+        #ffffff 100%
+    );
+    background-size: 400% auto;
+    animation: btn-shimmer 4s ease-in-out infinite;
+    transition: transform 0.25s, box-shadow 0.25s;
+    box-shadow: 0 0 24px rgba(0, 207, 255, 0.25);
+}
+
+@keyframes btn-shimmer {
+    0%   { background-position: 100% center; }
+    50%  { background-position: 0% center; }
+    100% { background-position: 100% center; }
 }
 
 .hero-btn:hover {
-    background: rgba(255, 255, 255, 0.9);
-    transform: scale(1.05);
+    transform: scale(1.06);
+    box-shadow: 0 0 40px rgba(0, 207, 255, 0.5);
+    animation-duration: 2s;
 }
 
+.hero-btn:active {
+    transform: scale(0.98);
+}
+
+.hero-btn-text {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-btn svg {
+    position: relative;
+    z-index: 1;
+    stroke: #07101D;
+    transition: transform 0.2s;
+}
+
+.hero-btn:hover svg {
+    transform: translateX(3px);
+}
+
+/* Scroll hint */
 .scroll-hint {
     position: absolute;
     bottom: 32px;
@@ -368,65 +365,19 @@ onUnmounted(() => {
 
 @keyframes float-orb {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -40px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.95); }
+    33%       { transform: translate(30px, -40px) scale(1.1); }
+    66%       { transform: translate(-20px, 20px) scale(0.95); }
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-    .hero-top-left {
-        top: 100px;
-        left: 40px;
-        max-width: 320px;
-    }
-
-    .hero-top-text {
-        font-size: 12px;
-    }
-}
-
 @media (max-width: 768px) {
-    .hero-top-left {
-        top: 80px;
-        left: 20px;
-        right: 20px;
-        max-width: none;
-        padding: 12px 16px;
-    }
-
-    .hero-top-text {
-        font-size: 11px;
-    }
-
-    .hero-eyebrow {
-        font-size: 0.7rem;
-        margin-bottom: 16px;
-    }
-
-    .hero-btn {
-        padding: 12px 24px;
-        font-size: 0.9rem;
-    }
-
-    .hero-title {
-        font-size: clamp(1.8rem, 5vw, 2.5rem);
-    }
-
-    .hero-title-line {
-        line-height: 1.2;
-    }
+    .hero-eyebrow { font-size: 0.7rem; margin-bottom: 16px; }
+    .hero-btn { padding: 12px 24px; font-size: 0.9rem; }
+    .hero-title { font-size: clamp(1.8rem, 5vw, 2.5rem); }
+    .hero-title-line { line-height: 1.2; }
 }
 
 @media (max-width: 480px) {
-    .hero-top-left {
-        top: 70px;
-        left: 16px;
-        right: 16px;
-    }
-
-    .hero-btn {
-        padding: 10px 20px;
-        font-size: 0.85rem;
-    }
+    .hero-btn { padding: 10px 20px; font-size: 0.85rem; }
 }
 </style>

@@ -9,7 +9,6 @@ const api = axios.create({
     },
 });
 
-// Добавляем токен в запросы
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('admin_token');
     if (token) {
@@ -30,7 +29,6 @@ api.interceptors.response.use(
     }
 );
 
-// Функция нормализации данных
 const normalizeData = (data) => {
     if (!data) return data;
     const normalized = { ...data };
@@ -78,8 +76,6 @@ export const articlesAPI = {
     update: (id, data) => api.put(`/admin/articles/${id}`, normalizeData(data)),
     delete: (id) => api.delete(`/admin/articles/${id}`),
     restore: (id) => api.post(`/admin/articles/${id}/restore`),
-
-    // ДЛЯ ЗАГРУЗКИ ФАЙЛОВ
     createWithFiles: (formData) => {
         return api.post('/admin/articles', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -91,6 +87,12 @@ export const articlesAPI = {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
+
+    // Генерация через Claude API
+    generate: (data) => api.post('/admin/articles/generate', data),
+
+    // Получить сохранённый промпт из настроек
+    getGenerationSettings: () => api.get('/admin/articles/generation-settings'),
 };
 
 // ========== CONTACTS ==========
@@ -159,24 +161,27 @@ export const settingsAPI = {
     getPublic: () => api.get('/settings'),
     getAll: () => api.get('/admin/settings'),
 
-    // Универсальное обновление
     updateSettings: (data) => api.post('/admin/settings', data),
 
-    // Отдельные методы для каждой группы
     updateCTA: (data) => api.post('/admin/settings/cta', data),
     updateContactForm: (data) => api.post('/admin/settings/contact-form', data),
     updateFooter: (data) => api.post('/admin/settings/footer', data),
     updateContacts: (data) => api.post('/admin/settings/contacts', data),
 
-    // ⚠️ ВАЖНО: для загрузки файлов нужно указать заголовок
     updateHeroWithFiles: (formData) => {
         return api.post('/admin/settings/hero-with-files', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
+
     updateSocials: (data) => api.post('/admin/settings/socials', data),
+
+    // Загрузка соцсетей с кастомными иконками
+    updateSocialsWithIcons: (formData) => {
+        return api.post('/admin/settings/socials-with-icons', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
 };
 
 export default api;

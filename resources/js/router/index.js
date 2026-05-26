@@ -1,3 +1,6 @@
+import BlogPage from '@/pages/BlogPage.vue';
+import BlogArticlePage from '@/pages/BlogArticlePage.vue';
+
 const routes = [
     {
         path: '/',
@@ -5,9 +8,14 @@ const routes = [
         component: () => import('@/pages/HomePage.vue'),
     },
     {
+        path: '/blog',
+            name: 'blog',
+        component: BlogPage,
+    },
+    {
         path: '/blog/:slug',
-        name: 'blog.show',
-        component: () => import('@/pages/BlogShow.vue'),
+            name: 'blog-article',
+        component: BlogArticlePage,
     },
     {
         path: '/:pathMatch(.*)*',

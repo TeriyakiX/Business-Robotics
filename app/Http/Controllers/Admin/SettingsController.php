@@ -48,11 +48,6 @@ final class SettingsController extends Controller
 
     public function updateHeroWithFiles(Request $request): JsonResponse
     {
-        \Log::info('=== UPDATE HERO WITH FILES ===');
-        \Log::info('Files:', array_keys($request->allFiles()));
-        \Log::info('Has background: ' . ($request->hasFile('hero_background') ? 'yes' : 'no'));
-        \Log::info('Has media: ' . ($request->hasFile('hero_media') ? 'yes' : 'no'));
-
         $textData = [
             'hero_title_line_1' => $request->input('hero_title_line_1'),
             'hero_title_line_2' => $request->input('hero_title_line_2'),
@@ -60,10 +55,8 @@ final class SettingsController extends Controller
             'hero_eyebrow' => $request->input('hero_eyebrow'),
             'hero_button_text' => $request->input('hero_button_text'),
             'hero_use_spline' => $request->input('hero_use_spline') === 'true' ? 'true' : 'false',
-            'hero_top_text' => $request->input('hero_top_text'), // ДОБАВЛЕНО!
+            'hero_top_text' => $request->input('hero_top_text'),
         ];
-
-        \Log::info('Text data:', $textData);
 
         $this->service->updateHeroWithFiles(
             $textData,
@@ -71,44 +64,61 @@ final class SettingsController extends Controller
             $request->file('hero_media')
         );
 
-        $saved = $this->service->getAll();
-        \Log::info('After save - hero_top_text:', [$saved['hero']['hero_top_text'] ?? null]);
-
         return response()->json(['success' => true, 'message' => 'Настройки героя обновлены']);
     }
 
     public function updateSocials(Request $request): JsonResponse
     {
-        // Убираем жесткую валидацию
         $socials = $request->input('socials', []);
 
-        // Фильтруем только валидные записи
-        $validSocials = array_filter($socials, function($social) {
-            return !empty($social['name']) &&
-                !empty($social['url']) &&
-                filter_var($social['url'], FILTER_VALIDATE_URL);
+        $validSocials = array_filter($socials, function ($social) {
+            return !empty($social['name']) && !empty($social['url']);
         });
 
-        $this->service->updateSocials($validSocials);
+        $this->service->updateSocials(array_values($validSocials));
 
         return response()->json(['success' => true, 'message' => 'Соцсети обновлены']);
     }
 
+    /**
+     * Обновление соцсетей с загрузкой кастомных иконок
+     */
+    public function updateSocialsWithIcons(Request $request): JsonResponse
+    {
+        $socialsJson = $request->input('socials', '[]');
+        $socials = is_string($socialsJson) ? json_decode($socialsJson, true) : $socialsJson;
+
+        // Обрабатываем кастомные иконки
+        $customIcons = $request->file('custom_icons', []);
+
+        foreach ($socials as &$social) {
+            $idx = $social['custom_icon_index'] ?? null;
+            if ($idx !== null && isset($customIcons[$idx])) {
+                $file = $customIcons[$idx];
+                $path = $file->store('settings/social-icons', 'public');
+                $social['custom_icon_url'] = asset('storage/' . $path);
+                unset($social['custom_icon_index']);
+            }
+            // Убираем служебные поля
+            unset($social['custom_icon_preview'], $social['_customFile']);
+        }
+        unset($social);
+
+        $validSocials = array_filter($socials, fn($s) => !empty($s['name']) && !empty($s['url']));
+
+        $this->service->updateSocials(array_values($validSocials));
+
+        return response()->json(['success' => true, 'message' => 'Соцсети с иконками обновлены']);
+    }
+
     public function updateSettings(Request $request): JsonResponse
     {
-        // ВРЕМЕННО: посмотрим что приходит
-        \Log::info('UPDATE SETTINGS DATA:', $request->all());
-
         $this->service->updateSettings($request->all());
-
-        // Проверяем что сохранилось
-        $saved = $this->service->getAll();
-        \Log::info('SAVED DATA:', $saved);
 
         return response()->json([
             'success' => true,
             'message' => 'Настройки обновлены',
-            'data' => new SettingsResource($saved)
+            'data' => new SettingsResource($this->service->getAll())
         ]);
     }
 }

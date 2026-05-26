@@ -50,6 +50,84 @@
             </button>
         </div>
 
+        <!-- AI Генерация статей -->
+        <div class="br-ai-panel">
+            <div class="br-ai-panel-header">
+                <div class="br-ai-panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00CFFF" stroke-width="1.8">
+                        <path d="M12 2a10 10 0 1 0 10 10"/>
+                        <path d="M12 6v6l3 3"/>
+                        <path d="M20 2v6h-6"/>
+                    </svg>
+                    Генерация статьи через AI
+                </div>
+                <span class="br-ai-panel-badge">Claude API</span>
+            </div>
+
+            <div class="br-ai-panel-body">
+                <div class="br-ai-form-row">
+                    <div class="br-ai-form-group br-ai-prompt-group">
+                        <label>Промпт для генерации</label>
+                        <textarea
+                            v-model="aiGeneration.prompt"
+                            placeholder="Например: Напиши статью о том, как AI-агенты помогают автоматизировать колл-центры в медицинских клиниках. Акцент на экономии времени персонала и снижении неявок пациентов."
+                            rows="3"
+                            class="br-ai-textarea"
+                        ></textarea>
+                        <span class="br-ai-hint">Промпт сохраняется автоматически — Claude будет генерировать статью по нему каждую неделю</span>
+                    </div>
+                    <div class="br-ai-form-group br-ai-category-group">
+                        <label>Категория статьи</label>
+                        <select v-model="aiGeneration.category" class="br-ai-select">
+                            <option value="automation">Автоматизация</option>
+                            <option value="ai_for_business">ИИ для бизнеса</option>
+                            <option value="hr_automation">HR-автоматизация</option>
+                            <option value="robots">Роботы</option>
+                            <option value="technology">Технологии</option>
+                            <option value="case">Кейс</option>
+                        </select>
+
+                        <div class="br-ai-schedule-info">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            Автогенерация: каждый понедельник в 09:00
+                        </div>
+                    </div>
+                </div>
+
+                <div class="br-ai-actions">
+                    <button
+                        @click="generateArticle"
+                        :disabled="aiGeneration.generating || !aiGeneration.prompt.trim()"
+                        class="br-ai-btn-generate"
+                    >
+                        <span v-if="aiGeneration.generating" class="br-ai-spinner"></span>
+                        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        {{ aiGeneration.generating ? 'Генерируется...' : 'Сгенерировать сейчас' }}
+                    </button>
+
+                    <!-- Статус генерации -->
+                    <div v-if="aiGeneration.status" :class="['br-ai-status', aiGeneration.statusType]">
+                        <svg v-if="aiGeneration.statusType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <svg v-else-if="aiGeneration.statusType === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        {{ aiGeneration.status }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading -->
         <div v-if="loading" class="br-admin-loading">
             <div class="br-admin-spinner"></div>
@@ -394,6 +472,54 @@ const saving = ref(false);
 const currentId = ref(null);
 const galleryInput = ref(null);
 
+// AI Генерация
+const aiGeneration = reactive({
+    prompt: '',
+    category: 'technology',
+    generating: false,
+    status: '',
+    statusType: 'success', // 'success' | 'error'
+});
+
+const generateArticle = async () => {
+    if (!aiGeneration.prompt.trim()) return;
+
+    aiGeneration.generating = true;
+    aiGeneration.status = '';
+
+    try {
+        const response = await articlesAPI.generate({
+            prompt: aiGeneration.prompt,
+            category: aiGeneration.category,
+        });
+
+        aiGeneration.status = 'Статья отправлена на генерацию. Появится в списке через 30–60 секунд.';
+        aiGeneration.statusType = 'success';
+
+        // Обновляем список через 15 секунд
+        setTimeout(() => fetchItems(), 15000);
+        setTimeout(() => fetchItems(), 40000);
+
+    } catch (error) {
+        const msg = error.response?.data?.message || error.message || 'Ошибка генерации';
+        aiGeneration.status = 'Ошибка: ' + msg;
+        aiGeneration.statusType = 'error';
+    } finally {
+        aiGeneration.generating = false;
+    }
+};
+
+// Загружаем сохранённый промпт при монтировании
+const loadSavedPrompt = async () => {
+    try {
+        const res = await articlesAPI.getGenerationSettings();
+        if (res?.prompt) aiGeneration.prompt = res.prompt;
+        if (res?.category) aiGeneration.category = res.category;
+    } catch (e) {
+        // промпт ещё не сохранён — ок
+    }
+};
+
 // Обложка
 const coverFile = ref(null);
 const coverPreview = ref('');
@@ -663,6 +789,7 @@ onMounted(() => {
         return;
     }
     fetchItems();
+    loadSavedPrompt();
 });
 </script>
 
@@ -1295,5 +1422,187 @@ onMounted(() => {
     .br-admin-items-grid { grid-template-columns: 1fr; }
     .br-admin-form-row { grid-template-columns: 1fr; gap: 12px; }
     .br-admin-modal-editor { max-width: 95%; }
+    .br-ai-form-row { grid-template-columns: 1fr; }
 }
+
+/* ========== AI GENERATION PANEL ========== */
+.br-ai-panel {
+    background: rgba(0, 207, 255, 0.04);
+    border: 1px solid rgba(0, 207, 255, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.br-ai-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.br-ai-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #E8F0F8;
+}
+
+.br-ai-panel-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #00CFFF;
+    background: rgba(0, 207, 255, 0.12);
+    border: 1px solid rgba(0, 207, 255, 0.3);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.br-ai-panel-body {}
+
+.br-ai-form-row {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.br-ai-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #5A7A95;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.br-ai-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 180, 230, 0.2);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.br-ai-textarea:focus {
+    outline: none;
+    border-color: rgba(0, 207, 255, 0.45);
+    box-shadow: 0 0 0 3px rgba(0, 207, 255, 0.08);
+}
+
+.br-ai-textarea::placeholder { color: #3A5A72; }
+
+.br-ai-select {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 180, 230, 0.2);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.br-ai-select option { background: #213349; }
+
+.br-ai-schedule-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #5A7A95;
+}
+
+.br-ai-schedule-info svg { stroke: #5A7A95; flex-shrink: 0; }
+
+.br-ai-hint {
+    display: block;
+    font-size: 11px;
+    color: #3A5A72;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.br-ai-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.br-ai-btn-generate {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, #00CFFF, #0090CC);
+    color: #07101D;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.br-ai-btn-generate:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(0, 207, 255, 0.4);
+}
+
+.br-ai-btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.br-ai-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(7, 16, 29, 0.3);
+    border-top-color: #07101D;
+    border-radius: 50%;
+    animation: br-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+.br-ai-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 10px;
+}
+
+.br-ai-status.success {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34D399;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.br-ai-status.success svg { stroke: #34D399; }
+
+.br-ai-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.br-ai-status.error svg { stroke: #ef4444; }
 </style>
