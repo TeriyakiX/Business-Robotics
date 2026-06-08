@@ -66,9 +66,9 @@ EOT;
             'x-api-key' => $apiKey,
             'anthropic-version' => '2023-06-01',
             'content-type' => 'application/json',
-        ])->timeout(100)->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-sonnet-4-20250514',
-            'max_tokens' => 4000,
+        ])->timeout(100)->post('http://72.56.25.171/v1/messages', [
+            'model' => 'claude-haiku-4-5-20251001',
+            'max_tokens' => 8000,
             'system' => $systemPrompt,
             'messages' => [
                 ['role' => 'user', 'content' => $this->prompt],
