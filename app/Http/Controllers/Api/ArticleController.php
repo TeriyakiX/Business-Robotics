@@ -53,8 +53,11 @@ final class ArticleController extends Controller
 
     public function item(string $id): JsonResponse
     {
+        $article = $this->service->item($id);
+        $article->load('categoryRelation');
+
         return $this->executeAction(
-            action: fn() => new ArticleFullResource($this->service->item($id)),
+            action: fn() => new ArticleFullResource($article),
             successMessageKey: 'article.item'
         );
     }
@@ -75,8 +78,12 @@ final class ArticleController extends Controller
 
     public function create(ArticleCreateRequest $request): JsonResponse
     {
+        $article = $this->service->create($request->toDto());
+
+        $article->load('categoryRelation');
+
         return $this->executeAction(
-            action: fn() => new ArticleFullResource($this->service->create($request->toDto())),
+            action: fn() => new ArticleFullResource($article),
             successMessageKey: 'article.create',
             successStatus: Response::HTTP_CREATED
         );
@@ -84,8 +91,12 @@ final class ArticleController extends Controller
 
     public function update(string $id, ArticleUpdateRequest $request): JsonResponse
     {
+        $article = $this->service->update($id, $request->toDto());
+
+        $article->load('categoryRelation');
+
         return $this->executeAction(
-            action: fn() => new ArticleFullResource($this->service->update($id, $request->toDto())),
+            action: fn() => new ArticleFullResource($article),
             successMessageKey: 'article.update'
         );
     }
@@ -137,17 +148,15 @@ final class ArticleController extends Controller
         $prompt = $request->input('prompt');
         $category = $request->input('category', 'technology');
 
-        // Сохраняем промпт и категорию в settings для планировщика
         DB::table('settings')->updateOrInsert(
             ['key' => 'article_generation_prompt'],
-            ['group' => 'general', 'value' => $prompt, 'type' => 'text', 'updated_at' => now(), 'created_at' => now()]
+            ['value' => $prompt, 'updated_at' => now(), 'created_at' => now()]
         );
         DB::table('settings')->updateOrInsert(
             ['key' => 'article_generation_category'],
-            ['group' => 'general', 'value' => $category, 'type' => 'text', 'updated_at' => now(), 'created_at' => now()]
+            ['value' => $category, 'updated_at' => now(), 'created_at' => now()]
         );
 
-        // Диспатчим Job
         GenerateArticleJob::dispatch($prompt, $category);
 
         return response()->json([

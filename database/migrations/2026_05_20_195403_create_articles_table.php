@@ -12,9 +12,7 @@ return new class extends Migration
     private const string ID = 'id';
     private const string SLUG = 'slug';
     private const string TITLE = 'title';
-    private const string CATEGORY = 'category';
-    private const string CATEGORY_COLOR = 'category_color';
-    private const string CATEGORY_BG_COLOR = 'category_bg_color';
+    private const string CATEGORY_ID = 'category_id';
     private const string DESCRIPTION = 'description';
     private const string CONTENT = 'content';
     private const string READING_TIME = 'reading_time';
@@ -33,9 +31,14 @@ return new class extends Migration
             $table->uuid(self::ID)->primary();
             $table->string(self::SLUG, 255)->unique();
             $table->string(self::TITLE, 500);
-            $table->string(self::CATEGORY, 100);
-            $table->string(self::CATEGORY_COLOR, 20)->nullable();
-            $table->string(self::CATEGORY_BG_COLOR, 50)->nullable();
+
+            // Внешний ключ на таблицу categories
+            $table->uuid(self::CATEGORY_ID)->nullable();
+            $table->foreign(self::CATEGORY_ID)
+                ->references('id')
+                ->on('categories')
+                ->onDelete('set null');
+
             $table->text(self::DESCRIPTION);
             $table->longText(self::CONTENT);
             $table->integer(self::READING_TIME)->default(5);
@@ -48,7 +51,7 @@ return new class extends Migration
             $table->softDeletes(self::DELETED_AT);
 
             $table->index(self::SLUG);
-            $table->index(self::CATEGORY);
+            $table->index(self::CATEGORY_ID);
             $table->index(self::IS_PUBLISHED);
             $table->index(self::PUBLISHED_AT);
         });

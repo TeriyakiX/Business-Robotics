@@ -4,25 +4,26 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\Article\ArticleCategoryEnum;
 use App\QueryBuilders\ArticleQueryBuilder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Article extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
+    protected $with = ['categoryRelation'];
     public const string DATABASE_TABLE = 'articles';
 
     public const string ID = 'id';
     public const string SLUG = 'slug';
+
     public const string TITLE = 'title';
-    public const string CATEGORY = 'category';
-    public const string CATEGORY_COLOR = 'category_color';
-    public const string CATEGORY_BG_COLOR = 'category_bg_color';
+    public const string CATEGORY = 'category_id';
+
     public const string DESCRIPTION = 'description';
     public const string CONTENT = 'content';
     public const string READING_TIME = 'reading_time';
@@ -41,8 +42,6 @@ final class Article extends Model
         self::SLUG,
         self::TITLE,
         self::CATEGORY,
-        self::CATEGORY_COLOR,
-        self::CATEGORY_BG_COLOR,
         self::DESCRIPTION,
         self::CONTENT,
         self::READING_TIME,
@@ -54,7 +53,6 @@ final class Article extends Model
     ];
 
     protected $casts = [
-        self::CATEGORY => ArticleCategoryEnum::class,
         self::IS_PUBLISHED => 'boolean',
         self::VIEWS_COUNT => 'integer',
         self::PUBLISHED_AT => 'datetime',
@@ -69,15 +67,23 @@ final class Article extends Model
         self::IS_PUBLISHED => false,
     ];
 
+    /**
+     * Связь с категорией
+     */
+    public function categoryRelation(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, self::CATEGORY);
+    }
+
     public function scopePublished($query)
     {
         return $query->where(self::IS_PUBLISHED, true)
             ->where(self::PUBLISHED_AT, '<=', now());
     }
 
-    public function scopeByCategory($query, ArticleCategoryEnum $category)
+    public function scopeByCategory($query, string $categoryId)
     {
-        return $query->where(self::CATEGORY, $category->value);
+        return $query->where(self::CATEGORY, $categoryId);
     }
 
     public function scopeRecent($query)
@@ -97,7 +103,9 @@ final class Article extends Model
 
     public function getCoverUrlAttribute(): ?string
     {
-        return $this->cover_path ? asset('storage/' . $this->cover_path) : null;
+        return $this->cover_path
+            ? asset('storage/' . $this->cover_path)
+            : null;
     }
 
     public function getGalleryUrlsAttribute(): array

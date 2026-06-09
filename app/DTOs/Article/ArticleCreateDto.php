@@ -14,11 +14,9 @@ final readonly class ArticleCreateDto
     public function __construct(
         public string $slug,
         public string $title,
-        public \App\Enums\Article\ArticleCategoryEnum $category,
-        public ?string $category_color = null,
-        public ?string $category_bg_color = null,
-        public string $description,
-        public string $content,
+        public string $category_slug,
+        public string $description = '',
+        public string $content = '',
         public ?int $reading_time = null,
         public ?string $published_at = null,
         public ?bool $is_published = false,
@@ -30,8 +28,7 @@ final readonly class ArticleCreateDto
     {
         return $this->toArray(
             only: [
-                'slug', 'title', 'category', 'category_color', 'category_bg_color',
-                'description', 'content', 'reading_time', 'published_at', 'is_published'
+                'slug', 'title', 'description', 'content', 'reading_time', 'published_at', 'is_published',
             ]
         );
     }

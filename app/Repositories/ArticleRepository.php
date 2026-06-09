@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\DTOs\Article\ArticleListDto;
 use App\Models\Article;
+use App\Models\Category;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,13 @@ final readonly class ArticleRepository
     {
         $query = Article::query()
             ->when($dto->search, fn($q) => $q->search($dto->search))
-            ->when($dto->category, fn($q) => $q->whereCategory($dto->category))
+            ->when($dto->category_slug, function ($q) use ($dto) {
+                $category = Category::where('slug', $dto->category_slug)->first();
+                if ($category) {
+                    return $q->where('category_id', $category->id);
+                }
+                return $q;
+            })
             ->when($dto->is_published !== null, function ($q) use ($dto) {
                 return $dto->is_published ? $q->wherePublished() : $q->whereDraft();
             })

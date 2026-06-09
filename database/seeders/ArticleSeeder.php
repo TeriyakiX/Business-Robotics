@@ -4,29 +4,21 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\Article\ArticleCategoryEnum;
 use App\Models\Article;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 final class ArticleSeeder extends Seeder
 {
-    // Цвета для категорий
-    private const array CATEGORY_COLORS = [
-        ArticleCategoryEnum::AUTOMATION->value => ['color' => '#00CFFF', 'bg' => 'rgba(0, 207, 255, 0.12)'],
-        ArticleCategoryEnum::AI_FOR_BUSINESS->value => ['color' => '#7C3AED', 'bg' => 'rgba(124, 58, 237, 0.12)'],
-        ArticleCategoryEnum::CASE->value => ['color' => '#34D399', 'bg' => 'rgba(52, 211, 153, 0.12)'],
-        ArticleCategoryEnum::ROBOTS->value => ['color' => '#F59E0B', 'bg' => 'rgba(245, 158, 11, 0.12)'],
-        ArticleCategoryEnum::HR_AUTOMATION->value => ['color' => '#EC4899', 'bg' => 'rgba(236, 72, 153, 0.12)'],
-        ArticleCategoryEnum::TECHNOLOGY->value => ['color' => '#3B82F6', 'bg' => 'rgba(59, 130, 246, 0.12)'],
-    ];
-
     public function run(): void
     {
+        $categories = Category::all()->keyBy('slug');
+
         $articles = [
             [
                 'title' => 'Автоматизация колл-центра с помощью ИИ: как сократить затраты на 60% в 2025 году',
-                'category' => ArticleCategoryEnum::AUTOMATION,
+                'category_slug' => 'automation',
                 'description' => 'Голосовые AI-агенты берут на себя до 80% входящих звонков, освобождая операторов для сложных задач. Разбираем, как внедрить и считать ROI.',
                 'reading_time' => 7,
                 'cover' => '1.avif',
@@ -34,7 +26,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Голосовой бот для бизнеса: полное руководство по выбору и внедрению в 2025 году',
-                'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
+                'category_slug' => 'ai_for_business', // Внимание: у тебя в CategorySeeder ai_for_business
                 'description' => 'Чем отличаются голосовые боты от простых IVR, какие технологии лежат в основе и как выбрать решение под конкретный бизнес — подробный разбор.',
                 'reading_time' => 8,
                 'cover' => '2.avif',
@@ -42,7 +34,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'AI-агенты для CRM: как автоматизировать продажи и никогда не терять лиды',
-                'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
+                'category_slug' => 'ai_for_business',
                 'description' => 'AI-агент, интегрированный в CRM, самостоятельно обзванивает новые заявки за 30 секунд, квалифицирует лид и создаёт сделку. Без участия менеджера.',
                 'reading_time' => 6,
                 'cover' => '3.avif',
@@ -50,7 +42,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Автоматизация онбординга персонала: как AI сокращает адаптацию с 3 недель до 5 дней',
-                'category' => ArticleCategoryEnum::HR_AUTOMATION,
+                'category_slug' => 'hr_automation',
                 'description' => 'AI-агент для HR заменяет куратора на этапе онбординга: обучает по скриптам, тестирует знания и фиксирует прогресс. Экономия — до 70% времени HR-отдела.',
                 'reading_time' => 6,
                 'cover' => '4.avif',
@@ -58,7 +50,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Кейс: как медицинская клиника сократила неявки пациентов на 65% с помощью голосового бота',
-                'category' => ArticleCategoryEnum::CASE,
+                'category_slug' => 'case',
                 'description' => 'Реальный кейс внедрения AI-уведомлений в медицинском центре: автоматические подтверждения записей, перенос слотов и напоминания снизили неявки с 22% до 7,7%.',
                 'reading_time' => 5,
                 'cover' => '5.avif',
@@ -66,7 +58,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Гуманоидные роботы 2025: топ-7 моделей, которые уже работают на производстве',
-                'category' => ArticleCategoryEnum::ROBOTS,
+                'category_slug' => 'robots',
                 'description' => 'Atlas, Optimus, Figure 02, Unitree H1, Agility Digit, Apptronik Apollo и Fourier GR-1 — сравниваем характеристики, цены и реальные кейсы применения.',
                 'reading_time' => 9,
                 'cover' => '6.avif',
@@ -74,7 +66,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Лидогенерация с помощью AI: как автоматический обзвон увеличивает продажи на 40%',
-                'category' => ArticleCategoryEnum::AUTOMATION,
+                'category_slug' => 'automation',
                 'description' => 'AI-LeadGen звонит базе из 10 000 контактов за один день, квалифицирует лиды и передаёт горячих клиентов менеджерам. Разбираем механику и результаты.',
                 'reading_time' => 6,
                 'cover' => '7.avif',
@@ -82,7 +74,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'ROI от внедрения AI-агентов: как рассчитать окупаемость до старта проекта',
-                'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
+                'category_slug' => 'ai_for_business',
                 'description' => 'Пошаговая методика расчёта возврата инвестиций от AI-автоматизации. Реальные цифры, формулы и типичные ошибки при оценке эффекта.',
                 'reading_time' => 7,
                 'cover' => '8.avif',
@@ -90,7 +82,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Роботы на производстве в 2025 году: ключевые тренды и прогнозы до 2030',
-                'category' => ArticleCategoryEnum::ROBOTS,
+                'category_slug' => 'robots',
                 'description' => 'Коллаборативные роботы, автономные мобильные платформы и AI-зрение меняют промышленность. Разбираем тренды, которые определят следующие 5 лет.',
                 'reading_time' => 8,
                 'cover' => '9.avif',
@@ -98,7 +90,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Автоматизация записи клиентов: как AI-агент заменяет администратора и работает 24/7',
-                'category' => ArticleCategoryEnum::AUTOMATION,
+                'category_slug' => 'automation',
                 'description' => 'AI-агент принимает звонки, ведёт запись, переносит слоты и напоминает о визите. Сравниваем с традиционным администратором по стоимости и качеству.',
                 'reading_time' => 6,
                 'cover' => '10.avif',
@@ -106,7 +98,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => '10 задач, которые AI-агент решает лучше человека: практический разбор',
-                'category' => ArticleCategoryEnum::AI_FOR_BUSINESS,
+                'category_slug' => 'ai_for_business',
                 'description' => 'Обзвон базы, квалификация лидов, напоминания, онбординг, сбор NPS — разбираем 10 бизнес-задач, в которых AI уже превосходит человека по скорости и стоимости.',
                 'reading_time' => 7,
                 'cover' => '11.avif',
@@ -114,7 +106,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Большие языковые модели (LLM) в бизнесе: как GPT-4o и Claude меняют корпоративный сектор',
-                'category' => ArticleCategoryEnum::TECHNOLOGY,
+                'category_slug' => 'technology',
                 'description' => 'LLM перестали быть игрушкой для стартапов. Разбираем, как крупные компании встраивают GPT-4o, Claude и Gemini в реальные бизнес-процессы.',
                 'reading_time' => 8,
                 'cover' => '12.avif',
@@ -122,7 +114,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Кейс: сеть фитнес-клубов увеличила возврат клиентов на 42% с помощью AI-напоминаний',
-                'category' => ArticleCategoryEnum::CASE,
+                'category_slug' => 'case',
                 'description' => 'Как автоматические голосовые напоминания за 2 часа до тренировки снизили пропуски вдвое и вернули 42% клиентов, переставших ходить на занятия.',
                 'reading_time' => 5,
                 'cover' => '13.avif',
@@ -130,7 +122,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Склады будущего: как роботы Amazon, Alibaba и Яндекса меняют логистику',
-                'category' => ArticleCategoryEnum::TECHNOLOGY,
+                'category_slug' => 'technology',
                 'description' => 'Автономные мобильные роботы, роботы-грузчики и системы компьютерного зрения делают современный склад практически безлюдным. Что это значит для бизнеса.',
                 'reading_time' => 7,
                 'cover' => '14.avif',
@@ -138,7 +130,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Будущее работы: как AI и роботы меняют рынок труда и какие профессии востребованы в 2030',
-                'category' => ArticleCategoryEnum::TECHNOLOGY,
+                'category_slug' => 'technology',
                 'description' => 'Автоматизация уничтожает одни профессии и создаёт другие. Разбираем, какие навыки защитят от замены роботом и как бизнесу перестроить команду.',
                 'reading_time' => 9,
                 'cover' => '15.avif',
@@ -147,17 +139,20 @@ final class ArticleSeeder extends Seeder
         ];
 
         foreach ($articles as $article) {
-            $categoryValue = $article['category']->value;
             $slug = Str::slug($article['title']);
+
+            if (!isset($categories[$article['category_slug']])) {
+                continue;
+            }
+
+            $category = $categories[$article['category_slug']];
 
             Article::query()->updateOrCreate(
                 [Article::SLUG => $slug],
                 [
                     Article::SLUG => $slug,
                     Article::TITLE => $article['title'],
-                    Article::CATEGORY => $article['category'],
-                    Article::CATEGORY_COLOR => self::CATEGORY_COLORS[$categoryValue]['color'],
-                    Article::CATEGORY_BG_COLOR => self::CATEGORY_COLORS[$categoryValue]['bg'],
+                    Article::CATEGORY => $category->id,
                     Article::DESCRIPTION => $article['description'],
                     Article::CONTENT => $article['content'],
                     Article::READING_TIME => $article['reading_time'],

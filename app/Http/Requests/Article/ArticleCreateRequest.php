@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Article;
 
 use App\DTOs\Article\ArticleCreateDto;
-use App\Enums\Article\ArticleCategoryEnum;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 final class ArticleCreateRequest extends FormRequest
@@ -23,9 +21,7 @@ final class ArticleCreateRequest extends FormRequest
 
         if ($this->has('title')) $data['title'] = $this->input('title');
         if ($this->has('slug')) $data['slug'] = $this->input('slug');
-        if ($this->has('category')) $data['category'] = $this->input('category');
-        if ($this->has('category_color')) $data['category_color'] = $this->input('category_color');
-        if ($this->has('category_bg_color')) $data['category_bg_color'] = $this->input('category_bg_color');
+        if ($this->has('category_slug')) $data['category_slug'] = $this->input('category_slug');
         if ($this->has('description')) $data['description'] = $this->input('description');
         if ($this->has('content')) $data['content'] = $this->input('content');
         if ($this->has('reading_time')) $data['reading_time'] = (int) $this->input('reading_time');
@@ -47,15 +43,13 @@ final class ArticleCreateRequest extends FormRequest
         return [
             'slug' => ['nullable', 'string', 'max:255', 'unique:articles,slug'],
             'title' => ['required', 'string', 'max:500'],
-            'category' => ['required', 'string', Rule::in(array_column(ArticleCategoryEnum::cases(), 'value'))],
-            'category_color' => ['nullable', 'string', 'max:20'],
-            'category_bg_color' => ['nullable', 'string', 'max:50'],
+            'category_slug' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:500'],
             'content' => ['required', 'string'],
             'reading_time' => ['nullable', 'integer', 'min:1', 'max:60'],
             'published_at' => ['nullable', 'date'],
             'is_published' => ['nullable', 'boolean'],
-            'cover' => ['nullable', 'file','mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
+            'cover' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
             'gallery' => ['nullable', 'array', 'max:10'],
             'gallery.*' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,webp,avif', 'max:5120'],
         ];
@@ -66,9 +60,7 @@ final class ArticleCreateRequest extends FormRequest
         return new ArticleCreateDto(
             slug: $this->input('slug') ?? Str::slug($this->input('title')),
             title: $this->input('title'),
-            category: ArticleCategoryEnum::from($this->input('category')),
-            category_color: $this->input('category_color'),
-            category_bg_color: $this->input('category_bg_color'),
+            category_slug: $this->input('category_slug'),
             description: $this->input('description'),
             content: $this->input('content'),
             reading_time: $this->input('reading_time'),

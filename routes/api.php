@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\CaseController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\MarqueeItemController;
 use App\Http\Controllers\Api\PartnerBenefitController;
@@ -14,6 +15,8 @@ use App\Http\Controllers\Api\ProcessStepController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Api\PolicyController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::prefix('v1')->group(function () {
 
@@ -75,6 +78,11 @@ Route::prefix('v1')->group(function () {
         Route::delete('/articles/{id}', [ArticleController::class, 'delete']);
         Route::post('/articles/{id}/restore', [ArticleController::class, 'restore']);
 
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
         // Contacts CRUD
         Route::get('/contacts', [ContactController::class, 'list']);
         Route::get('/contacts/{id}', [ContactController::class, 'item']);
@@ -122,10 +130,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/policies/{id}', [PolicyController::class, 'update']);
         Route::delete('/policies/{id}', [PolicyController::class, 'delete']);
 
-        // ========== НАСТРОЙКИ САЙТА ==========
         Route::get('/settings', [SettingsController::class, 'index']);
 
-        // Отдельные методы для каждой группы
         Route::post('/settings', [SettingsController::class, 'updateSettings']);
         Route::post('/settings/socials-with-icons', [SettingsController::class, 'updateSocialsWithIcons']);
         Route::post('/settings/cta', [SettingsController::class, 'update']);

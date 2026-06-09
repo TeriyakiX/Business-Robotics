@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DTOs\Article;
 
-use App\Enums\Article\ArticleCategoryEnum;
 use App\Traits\DTOs\UseAsArrayTrait;
 
 final readonly class ArticleListDto
@@ -13,7 +12,7 @@ final readonly class ArticleListDto
 
     public function __construct(
         public ?string $search = null,
-        public ?ArticleCategoryEnum $category = null,
+        public ?string $category_slug = null,
         public ?bool $is_published = null,
         public ?string $order_by = null,
         public ?string $order_direction = null,

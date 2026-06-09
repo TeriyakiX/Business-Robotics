@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests\Article;
 
 use App\DTOs\Article\ArticleListDto;
-use App\Enums\Article\ArticleCategoryEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -51,7 +50,7 @@ final class ArticleListRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'string', Rule::in(array_column(ArticleCategoryEnum::cases(), 'value'))],
+            'category_slug' => ['nullable', 'string', 'exists:categories,slug'],
             'is_published' => ['nullable', 'boolean'],
             'order_by' => ['nullable', 'string', Rule::in(['recent', 'popular', 'title', 'created_at'])],
             'order_direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
@@ -66,11 +65,9 @@ final class ArticleListRequest extends FormRequest
 
     public function toDto(): ArticleListDto
     {
-        $category = $this->input('category');
-
         return new ArticleListDto(
             search: $this->input('search'),
-            category: $category && $category !== '' ? ArticleCategoryEnum::tryFrom($category) : null,
+            category_slug: $this->input('category_slug'),
             is_published: $this->input('is_published'),
             order_by: $this->input('order_by', 'recent'),
             order_direction: $this->input('order_direction', 'desc'),

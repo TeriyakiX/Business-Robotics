@@ -10,23 +10,37 @@
                     </svg>
                     <input type="text" v-model="filters.search" placeholder="Поиск статей..." @input="debouncedFetch"/>
                 </div>
-                <div class="br-admin-filter-group">
+
+                <div class="br-admin-filter-group br-filter-category-wrap" ref="filterCategoryRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="4" width="18" height="18" rx="2"/>
                         <line x1="16" y1="2" x2="16" y2="6"/>
                         <line x1="8" y1="2" x2="8" y2="6"/>
                         <line x1="3" y1="10" x2="21" y2="10"/>
                     </svg>
-                    <select v-model="filters.category" @change="fetchItems">
-                        <option value="">Все категории</option>
-                        <option value="automation">Автоматизация</option>
-                        <option value="ai_for_business">ИИ для бизнеса</option>
-                        <option value="hr_automation">HR-автоматизация</option>
-                        <option value="robots">Роботы</option>
-                        <option value="technology">Технологии</option>
-                        <option value="case">Кейс</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterCategoryDropdown">
+                        <span class="br-searchable-value">
+                            {{ filters.category ? getCategoryLabel(filters.category) : 'Все категории' }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterCategoryOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterCategoryOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-search">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <input type="text" v-model="filterCategorySearch" placeholder="Поиск категории..." @click.stop ref="filterCategorySearchInput" />
+                        </div>
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.category === '' }" @click="selectFilterCategory('')">Все категории</div>
+                            <div v-for="cat in categories" :key="cat.slug" class="br-dropdown-option" :class="{ selected: filters.category === cat.slug }" @click="selectFilterCategory(cat.slug)">{{ cat.name }}</div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="br-admin-filter-group">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="12" r="10"/>
@@ -50,7 +64,7 @@
             </button>
         </div>
 
-        <!-- AI Генерация статей -->
+        <!-- AI Генерация -->
         <div class="br-ai-panel">
             <div class="br-ai-panel-header">
                 <div class="br-ai-panel-title">
@@ -63,30 +77,41 @@
                 </div>
                 <span class="br-ai-panel-badge">Claude API</span>
             </div>
-
             <div class="br-ai-panel-body">
                 <div class="br-ai-form-row">
                     <div class="br-ai-form-group br-ai-prompt-group">
                         <label>Промпт для генерации</label>
-                        <textarea
-                            v-model="aiGeneration.prompt"
-                            placeholder="Например: Напиши статью о том, как AI-агенты помогают автоматизировать колл-центры в медицинских клиниках. Акцент на экономии времени персонала и снижении неявок пациентов."
-                            rows="3"
-                            class="br-ai-textarea"
-                        ></textarea>
-                        <span class="br-ai-hint">Промпт сохраняется автоматически — Claude будет генерировать статью по нему каждую неделю</span>
+                        <textarea v-model="aiGeneration.prompt" placeholder="Напиши статью о том, как AI-агенты помогают автоматизировать колл-центры..." rows="3" class="br-ai-textarea"></textarea>
+                        <span class="br-ai-hint">Промпт сохраняется автоматически</span>
                     </div>
                     <div class="br-ai-form-group br-ai-category-group">
                         <label>Категория статьи</label>
-                        <select v-model="aiGeneration.category" class="br-ai-select">
-                            <option value="automation">Автоматизация</option>
-                            <option value="ai_for_business">ИИ для бизнеса</option>
-                            <option value="hr_automation">HR-автоматизация</option>
-                            <option value="robots">Роботы</option>
-                            <option value="technology">Технологии</option>
-                            <option value="case">Кейс</option>
-                        </select>
-
+                        <div class="br-searchable-select-wrap" ref="aiCategoryRef">
+                            <div class="br-ai-select br-searchable-select" @click="toggleAiCategoryDropdown">
+                                <span class="br-searchable-value">{{ getCategoryLabel(aiGeneration.category) || 'Выберите категорию' }}</span>
+                                <svg class="br-select-arrow" :class="{ open: aiCategoryOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                            <div v-if="aiCategoryOpen" class="br-dropdown-panel">
+                                <div class="br-dropdown-search">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <input type="text" v-model="aiCategorySearch" placeholder="Поиск или новая..." @click.stop ref="aiCategorySearchInput" />
+                                </div>
+                                <div class="br-dropdown-options">
+                                    <div v-for="cat in categories" :key="cat.slug" class="br-dropdown-option" :class="{ selected: aiGeneration.category === cat.slug }" @click="selectAiCategory(cat.slug)">{{ cat.name }}</div>
+                                    <div v-if="aiCategorySearch && !categoryExists(aiCategorySearch)" class="br-dropdown-option br-dropdown-option-new" @click="createAndSelectAiCategory(aiCategorySearch)">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                        Создать «{{ aiCategorySearch }}»
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="br-ai-schedule-info">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -98,21 +123,14 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="br-ai-actions">
-                    <button
-                        @click="generateArticle"
-                        :disabled="aiGeneration.generating || !aiGeneration.prompt.trim()"
-                        class="br-ai-btn-generate"
-                    >
+                    <button @click="generateArticle" :disabled="aiGeneration.generating || !aiGeneration.prompt.trim()" class="br-ai-btn-generate">
                         <span v-if="aiGeneration.generating" class="br-ai-spinner"></span>
                         <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                         </svg>
                         {{ aiGeneration.generating ? 'Генерируется...' : 'Сгенерировать сейчас' }}
                     </button>
-
-                    <!-- Статус генерации -->
                     <div v-if="aiGeneration.status" :class="['br-ai-status', aiGeneration.statusType]">
                         <svg v-if="aiGeneration.statusType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"/>
@@ -134,25 +152,24 @@
             <span>Загрузка статей...</span>
         </div>
 
-        <!-- Empty -->
         <div v-else-if="items.length === 0" class="br-admin-empty">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="2" y="7" width="20" height="15" rx="2"/>
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
             </svg>
             <h3>Нет статей</h3>
-            <p>Добавьте первую статью, нажав кнопку "Добавить статью"</p>
+            <p>Добавьте первую статью, нажав кнопку «Добавить статью»</p>
         </div>
 
         <!-- Grid -->
         <div v-else class="br-admin-items-grid">
             <div v-for="item in items" :key="item.id" class="br-admin-item-card">
                 <div class="br-admin-card-header">
-                    <div>
+                    <div class="br-admin-card-header-main">
                         <h3>{{ truncate(item.title, 50) }}</h3>
                         <div class="br-admin-article-meta">
                             <span class="br-admin-category" :style="{ background: item.category_bg_color || 'rgba(0,207,255,0.12)', color: item.category_color || '#00CFFF' }">
-                                {{ getCategoryLabel(item.category) }}
+                                {{ item.category }}
                             </span>
                             <span class="br-admin-reading-time" v-if="item.reading_time">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -168,9 +185,7 @@
                         {{ item.is_published ? 'Опубликована' : 'Черновик' }}
                     </span>
                 </div>
-
                 <div class="br-admin-card-body">
-                    <!-- Превью обложки в карточке -->
                     <div v-if="item.cover_url" class="br-admin-card-cover">
                         <img :src="item.cover_url" :alt="item.title" @error="e => e.target.style.display='none'"/>
                     </div>
@@ -194,7 +209,6 @@
                         </span>
                     </div>
                 </div>
-
                 <div class="br-admin-card-actions">
                     <button @click="openModal(item)" class="br-admin-btn-edit">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -229,7 +243,6 @@
                     </button>
                 </div>
                 <form @submit.prevent="submitForm" class="br-admin-modal-form">
-
                     <!-- Основная информация -->
                     <div class="br-admin-editor-section">
                         <div class="br-admin-section-title">
@@ -260,53 +273,50 @@
                         </div>
                     </div>
 
-                    <!-- Категория и оформление -->
+                    <!-- Категория -->
                     <div class="br-admin-editor-section">
                         <div class="br-admin-section-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                                 <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
                                 <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
-                                <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
-                                <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/>
                             </svg>
-                            Категория и оформление
+                            Категория
                         </div>
                         <div class="br-admin-form-row">
                             <div class="br-admin-form-group">
                                 <label>Категория</label>
-                                <select v-model="form.category">
-                                    <option value="">Выберите категорию</option>
-                                    <option value="automation">Автоматизация</option>
-                                    <option value="ai_for_business">ИИ для бизнеса</option>
-                                    <option value="hr_automation">HR-автоматизация</option>
-                                    <option value="robots">Роботы</option>
-                                    <option value="technology">Технологии</option>
-                                    <option value="case">Кейс</option>
-                                </select>
-                            </div>
-                            <div class="br-admin-form-group">
-                                <label>Цвет категории</label>
-                                <div class="br-admin-color-row">
-                                    <input type="color" v-model="form.category_color" class="br-admin-color-input"/>
-                                    <span class="br-admin-color-preview" :style="{ background: form.category_color }"></span>
-                                    <span class="br-admin-color-value">{{ form.category_color }}</span>
+                                <div class="br-searchable-select-wrap" ref="formCategoryRef">
+                                    <div class="br-form-select br-searchable-select" :class="{ focused: formCategoryOpen }" @click="toggleFormCategoryDropdown">
+                                        <span class="br-searchable-value" :class="{ placeholder: !form.category_slug }">
+                                            {{ form.category_slug ? getCategoryLabel(form.category_slug) : 'Выберите категорию' }}
+                                        </span>
+                                        <svg class="br-select-arrow" :class="{ open: formCategoryOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                    </div>
+                                    <div v-if="formCategoryOpen" class="br-dropdown-panel">
+                                        <div class="br-dropdown-search">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="11" cy="11" r="8"/>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                            </svg>
+                                            <input type="text" v-model="formCategorySearch" placeholder="Поиск или новая категория..." @click.stop ref="formCategorySearchInput" />
+                                        </div>
+                                        <div class="br-dropdown-options">
+                                            <div class="br-dropdown-option" :class="{ selected: form.category_slug === '' }" @click="selectFormCategory('')">— Без категории —</div>
+                                            <div v-for="cat in categories" :key="cat.slug" class="br-dropdown-option" :class="{ selected: form.category_slug === cat.slug }" @click="selectFormCategory(cat.slug)">{{ cat.name }}</div>
+                                            <div v-if="formCategorySearch && !categoryExists(formCategorySearch)" class="br-dropdown-option br-dropdown-option-new" @click="createAndSelectFormCategory(formCategorySearch)">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                                </svg>
+                                                Создать категорию «{{ formCategorySearch }}»
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+                                <span class="br-admin-hint">Можно создать новую категорию, введя её название</span>
                             </div>
-                        </div>
-                        <div class="br-admin-form-group">
-                            <label>Фон категории</label>
-                            <input
-                                type="text"
-                                v-model="form.category_bg_color"
-                                placeholder="rgba(0, 207, 255, 0.12) или #hex"
-                            />
-                            <div
-                                v-if="form.category_bg_color"
-                                class="br-admin-color-swatch"
-                                :style="{ background: form.category_bg_color }"
-                            ></div>
-                            <span class="br-admin-hint">Формат: rgba(r, g, b, a) или #hex</span>
                         </div>
                     </div>
 
@@ -319,65 +329,36 @@
                             </svg>
                             Изображения
                         </div>
-
-                        <!-- Обложка -->
                         <div class="br-admin-form-group">
                             <label>Обложка статьи</label>
-                            <input
-                                type="file"
-                                @change="handleCoverUpload"
-                                accept="image/jpeg,image/png,image/webp,image/avif"
-                                class="br-admin-file-input"
-                            />
+                            <input type="file" @change="handleCoverUpload" accept="image/jpeg,image/png,image/webp,image/avif" class="br-admin-file-input" />
                             <div v-if="coverPreview" class="br-admin-image-preview">
                                 <img :src="coverPreview" alt="Preview" @error="e => e.target.style.display='none'"/>
                                 <button type="button" @click="removeCover" class="br-admin-remove-image">×</button>
                             </div>
-                            <span class="br-admin-hint">Рекомендуемый размер: 1200x630px. Максимум 5MB</span>
+                            <span class="br-admin-hint">Рекомендуемый размер: 1200×630px. Максимум 5MB</span>
                         </div>
-
-                        <!-- Галерея -->
                         <div class="br-admin-form-group">
                             <label>Галерея изображений</label>
-                            <input
-                                type="file"
-                                @change="handleGalleryUpload"
-                                multiple
-                                accept="image/jpeg,image/png,image/webp,image/avif"
-                                class="br-admin-file-input"
-                                ref="galleryInput"
-                            />
-
-                            <!-- Существующие фото из галереи -->
+                            <input type="file" @change="handleGalleryUpload" multiple accept="image/jpeg,image/png,image/webp,image/avif" class="br-admin-file-input" ref="galleryInput" />
                             <div v-if="existingGallery.length > 0" class="br-admin-gallery-section">
                                 <p class="br-admin-gallery-label">Текущие фото:</p>
                                 <div class="br-admin-gallery-preview">
-                                    <div
-                                        v-for="(url, idx) in existingGallery"
-                                        :key="'existing-' + idx"
-                                        class="br-admin-gallery-item"
-                                    >
+                                    <div v-for="(url, idx) in existingGallery" :key="'existing-' + idx" class="br-admin-gallery-item">
                                         <img :src="url" alt="Gallery" @error="e => e.target.style.display='none'"/>
                                         <button type="button" @click="removeExistingGalleryImage(idx)" class="br-admin-remove-image">×</button>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Новые фото для загрузки -->
                             <div v-if="newGalleryPreviews.length > 0" class="br-admin-gallery-section">
                                 <p class="br-admin-gallery-label">Новые фото (будут загружены):</p>
                                 <div class="br-admin-gallery-preview">
-                                    <div
-                                        v-for="(preview, idx) in newGalleryPreviews"
-                                        :key="'new-' + idx"
-                                        class="br-admin-gallery-item"
-                                    >
+                                    <div v-for="(preview, idx) in newGalleryPreviews" :key="'new-' + idx" class="br-admin-gallery-item">
                                         <img :src="preview" alt="New gallery"/>
                                         <button type="button" @click="removeNewGalleryImage(idx)" class="br-admin-remove-image">×</button>
                                     </div>
                                 </div>
                             </div>
-
                             <span class="br-admin-hint">Можно выбрать несколько изображений. Максимум 10 файлов, каждый до 5MB</span>
                         </div>
                     </div>
@@ -458,9 +439,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { articlesAPI } from '../../services/api';
+import { articlesAPI, categoriesAPI } from '../../services/api';
 import QuillEditor from '../../components/QuillEditor.vue';
 
 const router = useRouter();
@@ -472,34 +453,149 @@ const saving = ref(false);
 const currentId = ref(null);
 const galleryInput = ref(null);
 
-// AI Генерация
+// ===== КАТЕГОРИИ =====
+const categories = ref([]);
+
+const getCategoryLabel = (slug) => {
+    const cat = categories.value.find(c => c.slug === slug);
+    return cat ? cat.name : slug;
+};
+
+const categoryExists = (search) => {
+    const q = search.toLowerCase().trim();
+    return categories.value.some(c => c.name.toLowerCase() === q || c.slug.toLowerCase() === q);
+};
+
+const loadCategories = async () => {
+    try {
+        const response = await categoriesAPI.getAll();
+        categories.value = response || [];
+        console.log('Categories loaded:', categories.value);
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        categories.value = [];
+    }
+};
+
+const createCategory = async (name) => {
+    try {
+        const response = await categoriesAPI.create({ name });
+        await loadCategories();
+        return response.slug;
+    } catch (error) {
+        console.error('Error creating category:', error);
+        const slug = name.toLowerCase().replace(/[^a-zа-яё0-9]/g, '_').substring(0, 50);
+        return slug;
+    }
+};
+
+// ===== FILTERS =====
+const filterCategoryRef = ref(null);
+const filterCategoryOpen = ref(false);
+const filterCategorySearch = ref('');
+const filterCategorySearchInput = ref(null);
+
+const toggleFilterCategoryDropdown = () => {
+    filterCategoryOpen.value = !filterCategoryOpen.value;
+    if (filterCategoryOpen.value) {
+        filterCategorySearch.value = '';
+        nextTick(() => filterCategorySearchInput.value?.focus());
+    }
+};
+
+const selectFilterCategory = (value) => {
+    filters.category = value;
+    filterCategoryOpen.value = false;
+    fetchItems();
+};
+
+// ===== AI CATEGORY =====
+const aiCategoryRef = ref(null);
+const aiCategoryOpen = ref(false);
+const aiCategorySearch = ref('');
+const aiCategorySearchInput = ref(null);
+
+const toggleAiCategoryDropdown = () => {
+    aiCategoryOpen.value = !aiCategoryOpen.value;
+    if (aiCategoryOpen.value) {
+        aiCategorySearch.value = '';
+        nextTick(() => aiCategorySearchInput.value?.focus());
+    }
+};
+
+const selectAiCategory = (value) => {
+    aiGeneration.category = value;
+    aiCategoryOpen.value = false;
+};
+
+const createAndSelectAiCategory = async (label) => {
+    const slug = await createCategory(label);
+    aiGeneration.category = slug;
+    aiCategoryOpen.value = false;
+    aiCategorySearch.value = '';
+};
+
+// ===== FORM CATEGORY =====
+const formCategoryRef = ref(null);
+const formCategoryOpen = ref(false);
+const formCategorySearch = ref('');
+const formCategorySearchInput = ref(null);
+
+const toggleFormCategoryDropdown = () => {
+    formCategoryOpen.value = !formCategoryOpen.value;
+    if (formCategoryOpen.value) {
+        formCategorySearch.value = '';
+        nextTick(() => formCategorySearchInput.value?.focus());
+    }
+};
+
+const selectFormCategory = (value) => {
+    console.log('Selected category slug:', value);
+    form.category_slug = value;
+    formCategoryOpen.value = false;
+};
+
+const createAndSelectFormCategory = async (label) => {
+    const slug = await createCategory(label);
+    form.category_slug = slug;
+    formCategoryOpen.value = false;
+    formCategorySearch.value = '';
+};
+
+const handleClickOutside = (e) => {
+    if (filterCategoryRef.value && !filterCategoryRef.value.contains(e.target)) {
+        filterCategoryOpen.value = false;
+    }
+    if (aiCategoryRef.value && !aiCategoryRef.value.contains(e.target)) {
+        aiCategoryOpen.value = false;
+    }
+    if (formCategoryRef.value && !formCategoryRef.value.contains(e.target)) {
+        formCategoryOpen.value = false;
+    }
+};
+
+// ===== AI GENERATION =====
 const aiGeneration = reactive({
     prompt: '',
     category: 'technology',
     generating: false,
     status: '',
-    statusType: 'success', // 'success' | 'error'
+    statusType: 'success',
 });
 
 const generateArticle = async () => {
     if (!aiGeneration.prompt.trim()) return;
-
     aiGeneration.generating = true;
     aiGeneration.status = '';
-
     try {
-        const response = await articlesAPI.generate({
+        await articlesAPI.generate({
             prompt: aiGeneration.prompt,
             category: aiGeneration.category,
         });
-
         aiGeneration.status = 'Статья отправлена на генерацию. Появится в списке через 30–60 секунд.';
         aiGeneration.statusType = 'success';
-
-        // Обновляем список через 15 секунд
         setTimeout(() => fetchItems(), 15000);
         setTimeout(() => fetchItems(), 40000);
-
     } catch (error) {
         const msg = error.response?.data?.message || error.message || 'Ошибка генерации';
         aiGeneration.status = 'Ошибка: ' + msg;
@@ -509,38 +605,33 @@ const generateArticle = async () => {
     }
 };
 
-// Загружаем сохранённый промпт при монтировании
 const loadSavedPrompt = async () => {
     try {
         const res = await articlesAPI.getGenerationSettings();
         if (res?.prompt) aiGeneration.prompt = res.prompt;
         if (res?.category) aiGeneration.category = res.category;
-    } catch (e) {
-        // промпт ещё не сохранён — ок
-    }
+    } catch (e) {}
 };
 
-// Обложка
+// ===== FILES =====
 const coverFile = ref(null);
 const coverPreview = ref('');
+const existingGallery = ref([]);
+const newGalleryFiles = ref([]);
+const newGalleryPreviews = ref([]);
 
-// Галерея разделена на существующие (URL) и новые (File)
-const existingGallery = ref([]);       // URL-строки с сервера
-const newGalleryFiles = ref([]);       // File объекты новых загрузок
-const newGalleryPreviews = ref([]);    // blob URL для превью новых
-
+// ===== FILTERS =====
 const filters = reactive({
     search: '',
     category: '',
     is_published: ''
 });
 
+// ===== FORM =====
 const form = reactive({
     title: '',
     slug: '',
-    category: '',
-    category_color: '#00CFFF',
-    category_bg_color: 'rgba(0, 207, 255, 0.12)',
+    category_slug: '',
     description: '',
     content: '',
     reading_time: 5,
@@ -548,17 +639,6 @@ const form = reactive({
     is_published: false,
     delete_cover: false
 });
-
-const categoryLabels = {
-    automation: 'Автоматизация',
-    ai_for_business: 'ИИ для бизнеса',
-    hr_automation: 'HR-автоматизация',
-    robots: 'Роботы',
-    technology: 'Технологии',
-    case: 'Кейс'
-};
-
-const getCategoryLabel = (category) => categoryLabels[category] || category;
 
 const generateSlugPlaceholder = computed(() => {
     if (form.title) {
@@ -588,7 +668,6 @@ const formatDate = (date) => {
     });
 };
 
-// ===== ОБЛОЖКА =====
 const handleCoverUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -600,36 +679,28 @@ const handleCoverUpload = (event) => {
 const removeCover = () => {
     coverFile.value = null;
     coverPreview.value = '';
-    // Если была существующая обложка — помечаем на удаление
-    if (isEdit.value) {
-        form.delete_cover = true;
-    }
+    if (isEdit.value) form.delete_cover = true;
 };
 
-// ===== ГАЛЕРЕЯ =====
 const handleGalleryUpload = (event) => {
     const files = Array.from(event.target.files);
     files.forEach(file => {
         newGalleryFiles.value.push(file);
         newGalleryPreviews.value.push(URL.createObjectURL(file));
     });
-    // Сбрасываем input чтобы можно было выбрать те же файлы повторно
     if (galleryInput.value) galleryInput.value.value = '';
 };
 
-// Удалить существующее фото из галереи
 const removeExistingGalleryImage = (idx) => {
     existingGallery.value.splice(idx, 1);
 };
 
-// Удалить новое фото из очереди загрузки
 const removeNewGalleryImage = (idx) => {
     URL.revokeObjectURL(newGalleryPreviews.value[idx]);
     newGalleryFiles.value.splice(idx, 1);
     newGalleryPreviews.value.splice(idx, 1);
 };
 
-// ===== FETCH =====
 const fetchItems = async () => {
     loading.value = true;
     try {
@@ -637,7 +708,6 @@ const fetchItems = async () => {
         if (filters.search) params.search = filters.search;
         if (filters.category) params.category = filters.category;
         if (filters.is_published !== '') params.is_published = filters.is_published === 'true';
-
         const response = await articlesAPI.getAll(params);
         items.value = response.data || response || [];
     } catch (error) {
@@ -647,7 +717,6 @@ const fetchItems = async () => {
     }
 };
 
-// ===== OPEN/CLOSE MODAL =====
 const resetModal = () => {
     coverFile.value = null;
     coverPreview.value = '';
@@ -655,6 +724,8 @@ const resetModal = () => {
     newGalleryFiles.value = [];
     newGalleryPreviews.value = [];
     form.delete_cover = false;
+    formCategoryOpen.value = false;
+    formCategorySearch.value = '';
 };
 
 const openModal = async (item = null) => {
@@ -663,42 +734,29 @@ const openModal = async (item = null) => {
 
     if (item) {
         modalOpen.value = true;
-
-        // Подгружаем полную статью чтобы получить gallery_urls
         let fullItem = item;
         try {
             const response = await articlesAPI.getById(item.id);
             fullItem = response.data || response || item;
-        } catch (e) {
-            fullItem = item;
-        }
+        } catch (e) { fullItem = item; }
 
         currentId.value = fullItem.id;
         form.title = fullItem.title || '';
         form.slug = fullItem.slug || '';
-        form.category = fullItem.category || '';
-        form.category_color = fullItem.category_color || '#00CFFF';
-        form.category_bg_color = fullItem.category_bg_color || 'rgba(0, 207, 255, 0.12)';
+        form.category_slug = fullItem.category_slug || '';
         form.description = fullItem.description || '';
         form.content = fullItem.content || '';
         form.reading_time = fullItem.reading_time || 5;
         form.published_at = fullItem.published_at ? fullItem.published_at.split(' ')[0] : '';
         form.is_published = fullItem.is_published ?? false;
 
-        if (fullItem.cover_url) {
-            coverPreview.value = fullItem.cover_url;
-        }
-
-        if (fullItem.gallery_urls && fullItem.gallery_urls.length) {
-            existingGallery.value = [...fullItem.gallery_urls];
-        }
+        if (fullItem.cover_url) coverPreview.value = fullItem.cover_url;
+        if (fullItem.gallery_urls?.length) existingGallery.value = [...fullItem.gallery_urls];
     } else {
         currentId.value = null;
         form.title = '';
         form.slug = '';
-        form.category = '';
-        form.category_color = '#00CFFF';
-        form.category_bg_color = 'rgba(0, 207, 255, 0.12)';
+        form.category_slug = '';
         form.description = '';
         form.content = '';
         form.reading_time = 5;
@@ -713,49 +771,32 @@ const closeModal = () => {
     setTimeout(() => resetModal(), 300);
 };
 
-// ===== SUBMIT =====
 const submitForm = async () => {
     saving.value = true;
     try {
+        console.log('Submitting category_slug:', form.category_slug);
+
         const formData = new FormData();
 
         formData.append('title', form.title || '');
         if (form.slug) formData.append('slug', form.slug);
-        formData.append('category', form.category || '');
-        formData.append('category_color', form.category_color || '#00CFFF');
-        formData.append('category_bg_color', form.category_bg_color || 'rgba(0, 207, 255, 0.12)');
+        formData.append('category_slug', form.category_slug || '');
         formData.append('description', form.description || '');
         formData.append('content', form.content || '');
         formData.append('reading_time', String(form.reading_time || 5));
         if (form.published_at) formData.append('published_at', form.published_at);
         formData.append('is_published', form.is_published ? 'true' : 'false');
 
-        // Обложка — только если новый файл выбран
-        if (coverFile.value instanceof File) {
-            formData.append('cover', coverFile.value);
-        }
+        if (coverFile.value instanceof File) formData.append('cover', coverFile.value);
+        if (form.delete_cover) formData.append('delete_cover', 'true');
 
-        // Удаление обложки
-        if (form.delete_cover) {
-            formData.append('delete_cover', 'true');
-        }
+        const validNewFiles = newGalleryFiles.value.filter(f => f instanceof File && f.size > 0);
+        if (validNewFiles.length > 0) validNewFiles.forEach(file => formData.append('gallery[]', file));
 
-        // Галерея — только реально новые File объекты
-        const validNewFiles = newGalleryFiles.value.filter(
-            f => f instanceof File && f.size > 0
-        );
-        if (validNewFiles.length > 0) {
-            validNewFiles.forEach(file => {
-                formData.append('gallery[]', file);
-            });
-        }
-        // Если gallery не отправляется — сервер не трогает существующую галерею
-
-        let response;
         if (isEdit.value && currentId.value) {
-            response = await articlesAPI.updateWithFiles(currentId.value, formData);
+            await articlesAPI.updateWithFiles(currentId.value, formData);
         } else {
-            response = await articlesAPI.createWithFiles(formData);
+            await articlesAPI.createWithFiles(formData);
         }
 
         closeModal();
@@ -770,9 +811,8 @@ const submitForm = async () => {
     }
 };
 
-// ===== DELETE =====
 const deleteItem = async (item) => {
-    if (!confirm(`Удалить статью "${item.title}"?`)) return;
+    if (!confirm(`Удалить статью «${item.title}»?`)) return;
     try {
         await articlesAPI.delete(item.id);
         await fetchItems();
@@ -784,12 +824,15 @@ const deleteItem = async (item) => {
 
 onMounted(() => {
     const token = localStorage.getItem('admin_token');
-    if (!token) {
-        router.push('/admin/login');
-        return;
-    }
+    if (!token) { router.push('/admin/login'); return; }
     fetchItems();
+    loadCategories();
     loadSavedPrompt();
+    document.addEventListener('mousedown', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
@@ -799,25 +842,27 @@ onMounted(() => {
     margin: 0 auto;
 }
 
-/* Filters Bar */
+/* ===== FILTERS BAR ===== */
 .br-admin-filters-bar {
     background: rgba(33, 51, 73, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 16px;
-    padding: 20px 24px;
+    padding: 16px 20px;
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
     border: 1px solid rgba(0, 180, 230, 0.12);
 }
 
 .br-admin-filters {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
 }
 
 .br-admin-filter-group {
@@ -828,9 +873,35 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.15);
     border-radius: 12px;
+    position: relative;
 }
 
-.br-admin-filter-group svg { stroke: #5A7A95; flex-shrink: 0; }
+.br-filter-category-wrap {
+    padding: 0;
+    overflow: visible;
+}
+
+.br-filter-category-wrap > svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    stroke: #5A7A95;
+    flex-shrink: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.br-filter-category-wrap .br-searchable-select {
+    padding-left: 40px;
+    padding-right: 32px;
+    min-width: 180px;
+    height: 42px;
+    border: none;
+    background: transparent;
+}
+
+.br-admin-filter-group svg:not(.br-select-arrow) { stroke: #5A7A95; flex-shrink: 0; }
 
 .br-admin-filter-group input,
 .br-admin-filter-group select {
@@ -856,7 +927,10 @@ onMounted(() => {
     border-radius: 12px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 14px;
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .br-admin-btn-primary:hover {
@@ -864,7 +938,136 @@ onMounted(() => {
     box-shadow: 0 0 15px rgba(0, 207, 255, 0.4);
 }
 
-/* Loading */
+/* ===== SEARCHABLE SELECT ===== */
+.br-searchable-select-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.br-searchable-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+    padding: 11px 14px;
+    background: #283D55;
+    border: 1px solid rgba(0, 180, 230, 0.22);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.br-ai-select.br-searchable-select {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(0, 180, 230, 0.2);
+}
+
+.br-form-select.focused,
+.br-searchable-select:hover {
+    border-color: rgba(0, 207, 255, 0.45);
+}
+
+.br-searchable-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.br-searchable-value.placeholder { color: #5A7A95; }
+
+.br-select-arrow {
+    flex-shrink: 0;
+    stroke: #5A7A95;
+    transition: transform 0.2s;
+}
+
+.br-select-arrow.open { transform: rotate(180deg); }
+
+/* Dropdown panel */
+.br-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #1A2D42;
+    border: 1px solid rgba(0, 207, 255, 0.3);
+    border-radius: 12px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.br-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(0, 180, 230, 0.15);
+}
+
+.br-dropdown-search svg { stroke: #5A7A95; flex-shrink: 0; }
+
+.br-dropdown-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: #E8F0F8;
+    width: 100%;
+}
+
+.br-dropdown-search input::placeholder { color: #5A7A95; }
+
+.br-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar { width: 4px; }
+.br-dropdown-options::-webkit-scrollbar-track { background: transparent; }
+.br-dropdown-options::-webkit-scrollbar-thumb { background: rgba(0, 180, 230, 0.3); border-radius: 4px; }
+
+.br-dropdown-option {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #C0D8EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.br-dropdown-option:hover { background: rgba(0, 207, 255, 0.1); color: #E8F0F8; }
+.br-dropdown-option.selected { background: rgba(0, 207, 255, 0.15); color: #00CFFF; }
+
+.br-dropdown-option-new {
+    color: #00CFFF;
+    border-top: 1px solid rgba(0, 180, 230, 0.15);
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.br-dropdown-option-new svg { stroke: #00CFFF; flex-shrink: 0; }
+.br-dropdown-option-new:hover { background: rgba(0, 207, 255, 0.15); }
+
+.br-dropdown-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: #5A7A95;
+}
+
+/* ===== LOADING ===== */
 .br-admin-loading {
     display: flex;
     flex-direction: column;
@@ -886,10 +1089,10 @@ onMounted(() => {
 
 @keyframes br-spin { to { transform: rotate(360deg); } }
 
-/* Empty */
+/* ===== EMPTY ===== */
 .br-admin-empty {
     text-align: center;
-    padding: 60px;
+    padding: 60px 20px;
     background: rgba(33, 51, 73, 0.6);
     border-radius: 20px;
     border: 1px solid rgba(0, 180, 230, 0.12);
@@ -899,14 +1102,14 @@ onMounted(() => {
 .br-admin-empty h3 { font-size: 20px; color: #E8F0F8; margin-bottom: 8px; }
 .br-admin-empty p { color: #94B4CC; }
 
-/* Grid */
+/* ===== GRID ===== */
 .br-admin-items-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
 }
 
-/* Card */
+/* ===== CARD ===== */
 .br-admin-item-card {
     background: rgba(33, 51, 73, 0.8);
     backdrop-filter: blur(10px);
@@ -914,6 +1117,8 @@ onMounted(() => {
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    display: flex;
+    flex-direction: column;
 }
 
 .br-admin-item-card:hover {
@@ -923,24 +1128,33 @@ onMounted(() => {
 }
 
 .br-admin-card-header {
-    padding: 20px 20px 12px;
+    padding: 18px 18px 12px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 10px;
+}
+
+.br-admin-card-header-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .br-admin-card-header h3 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #E8F0F8;
     margin: 0 0 8px 0;
+    line-height: 1.35;
+    word-break: break-word;
 }
 
 .br-admin-article-meta {
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
     margin-top: 6px;
 }
 
@@ -963,12 +1177,13 @@ onMounted(() => {
 .br-admin-status {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .br-admin-status-dot {
@@ -983,7 +1198,6 @@ onMounted(() => {
     color: #34D399;
     border: 1px solid rgba(52, 211, 153, 0.3);
 }
-
 .br-admin-status.active .br-admin-status-dot { background: #34D399; }
 
 .br-admin-status.inactive {
@@ -991,38 +1205,40 @@ onMounted(() => {
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
-
 .br-admin-status.inactive .br-admin-status-dot { background: #ef4444; }
 
-/* Card cover preview */
 .br-admin-card-cover {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     border-radius: 10px;
     overflow: hidden;
 }
 
 .br-admin-card-cover img {
     width: 100%;
-    height: 140px;
+    height: 130px;
     object-fit: cover;
     display: block;
-    border-radius: 10px;
 }
 
-.br-admin-card-body { padding: 16px 20px; }
+.br-admin-card-body {
+    padding: 14px 18px;
+    flex: 1;
+}
 
 .br-admin-description {
     font-size: 13px;
     color: #94B4CC;
     line-height: 1.5;
+    margin: 0;
 }
 
 .br-admin-stats {
     display: flex;
-    gap: 16px;
+    gap: 14px;
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid rgba(0, 180, 230, 0.1);
+    flex-wrap: wrap;
 }
 
 .br-admin-stat {
@@ -1036,16 +1252,16 @@ onMounted(() => {
 .br-admin-stat svg { stroke: #5A7A95; }
 
 .br-admin-card-actions {
-    padding: 16px 20px 20px;
+    padding: 14px 18px 18px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     border-top: 1px solid rgba(0, 180, 230, 0.1);
 }
 
 .br-admin-btn-edit,
 .br-admin-btn-delete {
     flex: 1;
-    padding: 8px 16px;
+    padding: 8px 12px;
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -1063,7 +1279,6 @@ onMounted(() => {
     color: #00CFFF;
     border: 1px solid rgba(0, 207, 255, 0.25);
 }
-
 .br-admin-btn-edit svg { stroke: #00CFFF; }
 .br-admin-btn-edit:hover { background: rgba(0, 207, 255, 0.2); }
 
@@ -1072,11 +1287,10 @@ onMounted(() => {
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
-
 .br-admin-btn-delete svg { stroke: #ef4444; }
 .br-admin-btn-delete:hover { background: rgba(239, 68, 68, 0.2); }
 
-/* Modal */
+/* ===== MODAL ===== */
 .br-admin-modal {
     position: fixed;
     inset: 0;
@@ -1086,12 +1300,14 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 .br-admin-modal-container {
     background: #213349;
     border-radius: 24px;
-    width: 90%;
+    width: 100%;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
@@ -1104,7 +1320,7 @@ onMounted(() => {
 .br-admin-modal-editor { max-width: 1200px; }
 
 @keyframes br-modal-slide {
-    from { opacity: 0; transform: scale(0.95); }
+    from { opacity: 0; transform: scale(0.96); }
     to { opacity: 1; transform: scale(1); }
 }
 
@@ -1112,13 +1328,13 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 28px;
+    padding: 20px 24px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.12);
     flex-shrink: 0;
 }
 
 .br-admin-modal-header h2 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
     color: #E8F0F8;
     margin: 0;
@@ -1131,19 +1347,21 @@ onMounted(() => {
     padding: 4px;
     color: #5A7A95;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
 }
 
 .br-admin-modal-close:hover { color: #00CFFF; }
 
 .br-admin-modal-form {
-    padding: 24px 28px;
+    padding: 20px 24px;
     overflow-y: auto;
     flex: 1;
 }
 
 .br-admin-editor-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
+    margin-bottom: 28px;
+    padding-bottom: 22px;
     border-bottom: 1px solid rgba(0, 180, 230, 0.1);
 }
 
@@ -1157,17 +1375,17 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #E8F0F8;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(0, 207, 255, 0.2);
 }
 
-.br-admin-section-title svg { stroke: #00CFFF; }
+.br-admin-section-title svg { stroke: #00CFFF; flex-shrink: 0; }
 
-.br-admin-form-group { margin-bottom: 20px; }
+.br-admin-form-group { margin-bottom: 18px; }
 .br-admin-form-group.full-width { grid-column: span 2; }
 
 .br-admin-form-group label {
@@ -1178,11 +1396,13 @@ onMounted(() => {
     margin-bottom: 8px;
 }
 
-.br-admin-form-group input,
+.br-admin-form-group input[type="text"],
+.br-admin-form-group input[type="number"],
+.br-admin-form-group input[type="date"],
 .br-admin-form-group textarea,
 .br-admin-form-group select {
     width: 100%;
-    padding: 12px 14px;
+    padding: 11px 14px;
     background: #283D55;
     border: 1px solid rgba(0, 180, 230, 0.22);
     border-radius: 12px;
@@ -1205,8 +1425,8 @@ onMounted(() => {
 .br-admin-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 18px;
+    margin-bottom: 18px;
 }
 
 /* File Input */
@@ -1224,7 +1444,7 @@ onMounted(() => {
 .br-admin-file-input::-webkit-file-upload-button {
     background: #00CFFF;
     border: none;
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: 8px;
     margin-right: 12px;
     cursor: pointer;
@@ -1248,9 +1468,7 @@ onMounted(() => {
 }
 
 /* Gallery */
-.br-admin-gallery-section {
-    margin-top: 12px;
-}
+.br-admin-gallery-section { margin-top: 12px; }
 
 .br-admin-gallery-label {
     font-size: 12px;
@@ -1262,17 +1480,14 @@ onMounted(() => {
 .br-admin-gallery-preview {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
-.br-admin-gallery-item {
-    position: relative;
-    flex-shrink: 0;
-}
+.br-admin-gallery-item { position: relative; flex-shrink: 0; }
 
 .br-admin-gallery-item img {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
     border-radius: 8px;
     object-fit: cover;
     display: block;
@@ -1283,8 +1498,8 @@ onMounted(() => {
     position: absolute;
     top: -8px;
     right: -8px;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: rgba(239, 68, 68, 0.9);
     border: none;
@@ -1303,54 +1518,16 @@ onMounted(() => {
     transform: scale(1.1);
 }
 
-/* Color */
-.br-admin-color-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.br-admin-color-input {
-    width: 60px;
-    height: 42px;
-    padding: 4px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: 1px solid rgba(0, 180, 230, 0.22);
-    background: #283D55;
-}
-
-.br-admin-color-preview {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid rgba(0, 180, 230, 0.3);
-    flex-shrink: 0;
-}
-
-.br-admin-color-value {
-    font-size: 13px;
-    color: #94B4CC;
-    font-family: monospace;
-}
-
-.br-admin-color-swatch {
-    width: 100%;
-    height: 32px;
-    border-radius: 8px;
-    margin-top: 8px;
-    border: 1px solid rgba(0, 180, 230, 0.2);
-}
-
 .br-admin-hint {
     display: block;
     font-size: 11px;
     color: #5A7A95;
     margin-top: 6px;
+    line-height: 1.4;
 }
 
 /* Status options */
-.br-admin-status-options { display: flex; gap: 20px; }
+.br-admin-status-options { display: flex; gap: 20px; flex-wrap: wrap; }
 
 .br-admin-radio {
     display: flex;
@@ -1368,9 +1545,10 @@ onMounted(() => {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
-    padding-top: 20px;
+    margin-top: 20px;
+    padding-top: 18px;
     border-top: 1px solid rgba(0, 180, 230, 0.12);
+    flex-wrap: wrap;
 }
 
 .br-admin-btn-cancel {
@@ -1382,6 +1560,7 @@ onMounted(() => {
     font-weight: 500;
     color: #94B4CC;
     transition: all 0.2s;
+    font-size: 14px;
 }
 
 .br-admin-btn-cancel:hover {
@@ -1397,40 +1576,19 @@ onMounted(() => {
     border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 14px;
     transition: all 0.2s;
 }
 
-.br-admin-btn-save:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 15px rgba(0, 207, 255, 0.4);
-}
+.br-admin-btn-save:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 207, 255, 0.4); }
+.br-admin-btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-.br-admin-btn-save:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .br-admin-filters-bar { flex-direction: column; align-items: stretch; }
-    .br-admin-filters { flex-direction: column; }
-    .br-admin-filter-group { width: 100%; }
-    .br-admin-filter-group input,
-    .br-admin-filter-group select { min-width: auto; width: 100%; }
-    .br-admin-btn-primary { justify-content: center; }
-    .br-admin-items-grid { grid-template-columns: 1fr; }
-    .br-admin-form-row { grid-template-columns: 1fr; gap: 12px; }
-    .br-admin-modal-editor { max-width: 95%; }
-    .br-ai-form-row { grid-template-columns: 1fr; }
-}
-
-/* ========== AI GENERATION PANEL ========== */
+/* ===== AI GENERATION PANEL ===== */
 .br-ai-panel {
     background: rgba(0, 207, 255, 0.04);
     border: 1px solid rgba(0, 207, 255, 0.2);
     border-radius: 16px;
-    padding: 20px 24px;
+    padding: 18px 20px;
     margin-bottom: 24px;
 }
 
@@ -1439,6 +1597,8 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .br-ai-panel-title {
@@ -1462,8 +1622,6 @@ onMounted(() => {
     border-radius: 999px;
 }
 
-.br-ai-panel-body {}
-
 .br-ai-form-row {
     display: grid;
     grid-template-columns: 1fr 220px;
@@ -1483,7 +1641,7 @@ onMounted(() => {
 
 .br-ai-textarea {
     width: 100%;
-    padding: 12px 14px;
+    padding: 11px 14px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.2);
     border-radius: 12px;
@@ -1506,7 +1664,7 @@ onMounted(() => {
 
 .br-ai-select {
     width: 100%;
-    padding: 12px 14px;
+    padding: 11px 14px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.2);
     border-radius: 12px;
@@ -1540,7 +1698,7 @@ onMounted(() => {
 .br-ai-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     flex-wrap: wrap;
 }
 
@@ -1595,7 +1753,6 @@ onMounted(() => {
     color: #34D399;
     border: 1px solid rgba(52, 211, 153, 0.25);
 }
-
 .br-ai-status.success svg { stroke: #34D399; }
 
 .br-ai-status.error {
@@ -1603,6 +1760,142 @@ onMounted(() => {
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
-
 .br-ai-status.error svg { stroke: #ef4444; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .br-admin-items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .br-ai-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .br-ai-category-group .br-searchable-select-wrap {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .br-admin-filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 16px;
+    }
+
+    .br-admin-filters {
+        flex-direction: column;
+    }
+
+    .br-admin-filter-group {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .br-admin-filter-group input,
+    .br-admin-filter-group select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .br-filter-category-wrap .br-searchable-select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .br-admin-btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .br-admin-items-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .br-admin-form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .br-admin-form-group.full-width {
+        grid-column: span 1;
+    }
+
+    .br-admin-modal {
+        padding: 8px;
+        align-items: flex-end;
+    }
+
+    .br-admin-modal-container {
+        border-radius: 20px 20px 0 0;
+        max-height: 95vh;
+    }
+
+    .br-admin-modal-header {
+        padding: 16px 18px;
+    }
+
+    .br-admin-modal-header h2 {
+        font-size: 17px;
+    }
+
+    .br-admin-modal-form {
+        padding: 16px 18px;
+    }
+
+    .br-admin-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .br-admin-btn-cancel,
+    .br-admin-btn-save {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .br-ai-panel {
+        padding: 14px 16px;
+    }
+
+    .br-ai-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .br-ai-btn-generate {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .br-admin-card-header {
+        flex-wrap: wrap;
+    }
+
+    .br-admin-card-actions {
+        padding: 12px 14px 14px;
+    }
+
+    .br-dropdown-panel {
+        position: fixed;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        top: auto !important;
+        bottom: 12px;
+        max-height: 60vh;
+    }
+
+    .br-dropdown-options {
+        max-height: 45vh;
+    }
+}
+
+@media (max-width: 400px) {
+    .br-admin-stats {
+        flex-direction: column;
+        gap: 6px;
+    }
+}
 </style>

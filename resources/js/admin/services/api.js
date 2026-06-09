@@ -88,11 +88,16 @@ export const articlesAPI = {
         });
     },
 
-    // Генерация через Claude API
     generate: (data) => api.post('/admin/articles/generate', data),
 
-    // Получить сохранённый промпт из настроек
     getGenerationSettings: () => api.get('/admin/articles/generation-settings'),
+};
+
+export const categoriesAPI = {
+    getAll: () => api.get('/admin/categories').then(r => r.data), // r.data потому что api уже возвращает response.data
+    create: (data) => api.post('/admin/categories', data).then(r => r.data),
+    update: (id, data) => api.put(`/admin/categories/${id}`, data).then(r => r.data),
+    delete: (id) => api.delete(`/admin/categories/${id}`),
 };
 
 // ========== CONTACTS ==========
@@ -176,7 +181,6 @@ export const settingsAPI = {
 
     updateSocials: (data) => api.post('/admin/settings/socials', data),
 
-    // Загрузка соцсетей с кастомными иконками
     updateSocialsWithIcons: (formData) => {
         return api.post('/admin/settings/socials-with-icons', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }

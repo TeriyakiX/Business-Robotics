@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Enums\Article\ArticleCategoryEnum;
 use App\Models\Article;
-use App\Models\Setting;
+use App\Models\Category;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,7 +24,7 @@ final class GenerateArticleJob implements ShouldQueue
 
     public function __construct(
         private readonly string $prompt,
-        private readonly string $category = 'technology',
+        private readonly string $categorySlug,
     ) {}
 
     public function handle(): void
@@ -37,7 +36,23 @@ final class GenerateArticleJob implements ShouldQueue
             return;
         }
 
-        Log::info('GenerateArticleJob: starting generation', ['prompt' => $this->prompt]);
+        $category = Category::where('slug', $this->categorySlug)->first();
+
+        if (!$category) {
+            Log::error('GenerateArticleJob: category not found', ['slug' => $this->categorySlug]);
+            $category = Category::create([
+                'slug' => $this->categorySlug,
+                'name' => $this->categorySlug,
+                'color' => '#00CFFF',
+                'bg_color' => 'rgba(0,207,255,0.08)',
+            ]);
+        }
+
+        Log::info('GenerateArticleJob: starting generation', [
+            'prompt' => $this->prompt,
+            'category_slug' => $this->categorySlug,
+            'category_id' => $category->id,
+        ]);
 
         $systemPrompt = <<<EOT
 Ты — профессиональный автор статей для блога о робототехнике и AI-автоматизации бизнеса.
@@ -48,17 +63,15 @@ final class GenerateArticleJob implements ShouldQueue
   "title": "Заголовок статьи",
   "description": "Краткое описание для карточки (1-2 предложения, до 200 символов)",
   "content": "Полный HTML-контент статьи с тегами <p>, <h2>, <h3>, <ul>, <li>, <strong>",
-  "reading_time": 7,
-  "category": "technology"
+  "reading_time": 7
 }
-
-Допустимые значения category: automation, ai_for_business, hr_automation, robots, technology, case
 
 Требования:
 - Статья на русском языке
 - Заголовок — конкретный и SEO-friendly
 - Контент — минимум 600 слов, структурированный с подзаголовками
 - reading_time — реалистичное время чтения в минутах
+- Тема статьи: {$this->prompt}
 - Только валидный JSON, без лишнего текста
 EOT;
 
@@ -90,25 +103,19 @@ EOT;
             ->pluck('text')
             ->implode('');
 
-        // Убираем markdown-блоки если Claude всё же добавил
         $text = preg_replace('/^```json\s*/m', '', $text);
         $text = preg_replace('/^```\s*/m', '', $text);
         $text = trim($text);
 
-        $article = json_decode($text, true);
+        $articleData = json_decode($text, true);
 
-        if (!$article || !isset($article['title'], $article['content'])) {
+        if (!$articleData || !isset($articleData['title'], $articleData['content'])) {
             Log::error('GenerateArticleJob: failed to parse JSON', ['raw' => $text]);
             $this->fail(new \Exception('Failed to parse article JSON from Claude'));
             return;
         }
 
-        // Определяем категорию
-        $categoryValue = $article['category'] ?? $this->category;
-        $category = ArticleCategoryEnum::tryFrom($categoryValue) ?? ArticleCategoryEnum::from('technology');
-
-        // Генерируем уникальный slug
-        $baseSlug = Str::slug($article['title']);
+        $baseSlug = Str::slug($articleData['title']);
         $slug = $baseSlug;
         $counter = 1;
         while (Article::withTrashed()->where('slug', $slug)->exists()) {
@@ -117,23 +124,28 @@ EOT;
 
         Article::create([
             'slug'         => $slug,
-            'title'        => $article['title'],
-            'description'  => $article['description'] ?? '',
-            'content'      => $article['content'],
-            'category'     => $category->value,
-            'reading_time' => $article['reading_time'] ?? 5,
+            'title'        => $articleData['title'],
+            'description'  => $articleData['description'] ?? '',
+            'content'      => $articleData['content'],
+            'category_id'  => $category->id,
+            'reading_time' => $articleData['reading_time'] ?? 5,
             'is_published' => true,
             'published_at' => now(),
             'views_count'  => 0,
         ]);
 
-        Log::info('GenerateArticleJob: article created', ['slug' => $slug, 'title' => $article['title']]);
+        Log::info('GenerateArticleJob: article created', [
+            'slug' => $slug,
+            'title' => $articleData['title'],
+            'category_id' => $category->id,
+        ]);
     }
 
     public function failed(\Throwable $exception): void
     {
         Log::error('GenerateArticleJob failed', [
             'prompt' => $this->prompt,
+            'category' => $this->categorySlug,
             'error' => $exception->getMessage(),
         ]);
     }

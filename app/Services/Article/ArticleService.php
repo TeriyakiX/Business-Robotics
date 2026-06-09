@@ -8,8 +8,8 @@ use App\DTOs\Article\ArticleCreateDto;
 use App\DTOs\Article\ArticleListDto;
 use App\DTOs\Article\ArticleUpdateDto;
 use Illuminate\Http\UploadedFile;
-use App\Exceptions\Article\ArticleNotFoundException;
 use App\Models\Article;
+use App\Models\Category;
 use App\Repositories\ArticleRepository;
 use App\Validators\ArticleValidator;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -47,8 +47,33 @@ final readonly class ArticleService
     private function saveFile(UploadedFile $file, string $folder): string
     {
         $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs($folder, $filename, 'public');
-        return $path;
+        return $file->storeAs($folder, $filename, 'public');
+    }
+
+    /**
+     * Получить или создать категорию по slug
+     */
+    private function findOrCreateCategory(?string $slug, ?string $title = null): ?Category
+    {
+        if (empty($slug)) {
+            return null;
+        }
+
+        $category = Category::where('slug', $slug)->first();
+
+        if ($category) {
+            return $category;
+        }
+
+        $categoryName = $title ?? $slug;
+        $displayName = ucfirst(str_replace('_', ' ', $categoryName));
+
+        return Category::create([
+            'slug' => $slug,
+            'name' => $displayName,
+            'color' => '#00CFFF',
+            'bg_color' => 'rgba(0,207,255,0.08)',
+        ]);
     }
 
     public function create(ArticleCreateDto $dto): Article
@@ -56,6 +81,8 @@ final readonly class ArticleService
         $slug = $dto->slug ?: Str::slug($dto->title);
         $this->validator->validateSlugUnique($slug);
 
+        // Находим или создаём категорию
+        $category = $this->findOrCreateCategory($dto->category_slug, $dto->title);
         $publishedAt = $dto->published_at;
         if ($dto->is_published && !$publishedAt) {
             $publishedAt = Carbon::now()->toDateTimeString();
@@ -76,18 +103,16 @@ final readonly class ArticleService
         }
 
         $createData = [
-            'slug' => $slug,
-            'title' => $dto->title,
-            'category' => $dto->category->value,
-            'category_color' => $dto->category_color,
-            'category_bg_color' => $dto->category_bg_color,
-            'description' => $dto->description,
-            'content' => $dto->content,
-            'reading_time' => $dto->reading_time ?? ceil(str_word_count(strip_tags($dto->content)) / 200),
-            'published_at' => $publishedAt,
-            'is_published' => $dto->is_published ?? false,
-            'cover_path' => $coverPath,
-            'gallery' => $galleryPaths,
+            'slug'             => $slug,
+            'title'            => $dto->title,
+            'category_id'      => $category?->id,
+            'description'      => $dto->description,
+            'content'          => $dto->content,
+            'reading_time'     => $dto->reading_time ?? (int) ceil(str_word_count(strip_tags($dto->content)) / 200),
+            'published_at'     => $publishedAt,
+            'is_published'     => $dto->is_published ?? false,
+            'cover_path'       => $coverPath,
+            'gallery'          => $galleryPaths,
         ];
 
         return $this->repository->create($createData);
@@ -108,16 +133,18 @@ final readonly class ArticleService
         }
 
         $updateData = [];
-        if ($dto->slug !== null) $updateData['slug'] = $dto->slug;
-        if ($dto->title !== null) $updateData['title'] = $dto->title;
-        if ($dto->category !== null) $updateData['category'] = $dto->category->value;
-        if ($dto->category_color !== null) $updateData['category_color'] = $dto->category_color;
-        if ($dto->category_bg_color !== null) $updateData['category_bg_color'] = $dto->category_bg_color;
-        if ($dto->description !== null) $updateData['description'] = $dto->description;
-        if ($dto->content !== null) $updateData['content'] = $dto->content;
-        if ($dto->reading_time !== null) $updateData['reading_time'] = $dto->reading_time;
-        if ($publishedAt !== null) $updateData['published_at'] = $publishedAt;
-        if ($dto->is_published !== null) $updateData['is_published'] = $dto->is_published;
+        if ($dto->slug !== null)             $updateData['slug']             = $dto->slug;
+        if ($dto->title !== null)            $updateData['title']            = $dto->title;
+        if ($dto->description !== null)      $updateData['description']      = $dto->description;
+        if ($dto->content !== null)          $updateData['content']          = $dto->content;
+        if ($dto->reading_time !== null)     $updateData['reading_time']     = $dto->reading_time;
+        if ($publishedAt !== null)           $updateData['published_at']     = $publishedAt;
+        if ($dto->is_published !== null)     $updateData['is_published']     = $dto->is_published;
+
+        if ($dto->category_slug !== null) {
+            $category = $this->findOrCreateCategory($dto->category_slug, $dto->title);
+            $updateData['category_id'] = $category?->id;
+        }
 
         if ($dto->shouldDeleteCover()) {
             if ($article->cover_path) {
@@ -137,7 +164,6 @@ final readonly class ArticleService
                     Storage::disk('public')->delete($oldImage);
                 }
             }
-
             $galleryPaths = [];
             foreach ($dto->gallery as $image) {
                 if ($image instanceof UploadedFile && $image->isValid()) {

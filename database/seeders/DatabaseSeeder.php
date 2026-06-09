@@ -14,6 +14,7 @@ final class DatabaseSeeder extends Seeder
             AgentSeeder::class,
             SettingsSeeder::class,
             CaseSeeder::class,
+            CategorySeeder::class,
             ArticleSeeder::class,
             ProcessStepSeeder::class,
             MarqueeItemSeeder::class,
