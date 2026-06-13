@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (min-width: 1280px) {
+    html {
+        zoom: 0.85;
+    }
+
+    /* Для Firefox */
+    @-moz-document url-prefix() {
+        html {
+            transform: scale(0.85);
+            transform-origin: top center;
+            width: 117%;
+        }
+    }
+}
+
 @layer base {
     * {
         box-sizing: border-box;
@@ -688,3 +703,163 @@
     -webkit-text-fill-color: transparent;
     animation: pctShimmer 3s linear infinite;
 }
+
+.br-admin-crud,
+.br-admin-dashboard,
+.br-admin-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+.br-admin-empty,
+.br-admin-empty-recent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    min-height: 300px;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+.br-admin-empty svg,
+.br-admin-empty-recent svg {
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.br-admin-empty h3,
+.br-admin-empty-recent h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.br-admin-empty p,
+.br-admin-empty-recent p {
+    margin: 0;
+    max-width: 400px;
+}
+
+.br-admin-item-card,
+.br-admin-recent-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.br-admin-items-grid,
+.br-admin-recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.br-admin-form-group {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.br-admin-form-group input,
+.br-admin-form-group textarea,
+.br-admin-form-group select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.br-admin-btn-primary,
+.br-admin-btn-save,
+.br-admin-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.br-admin-filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.br-admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.br-admin-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.br-admin-modal-container {
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    margin: auto;
+    box-sizing: border-box;
+}
+
+.br-admin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    min-height: 300px;
+}
+
+@media (max-width: 768px) {
+    .br-admin-crud,
+    .br-admin-dashboard,
+    .br-admin-container {
+        padding: 0 16px;
+    }
+
+    .br-admin-items-grid,
+    .br-admin-recent-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .br-admin-filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .br-admin-filters {
+        flex-direction: column;
+    }
+
+    .br-admin-filter-group {
+        width: 100%;
+    }
+
+    .br-admin-filter-group input,
+    .br-admin-filter-group select {
+        width: 100%;
+    }
+
+    .br-admin-btn-primary {
+        justify-content: center;
+    }
+}
+
