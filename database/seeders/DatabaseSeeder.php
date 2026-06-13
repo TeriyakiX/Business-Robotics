@@ -21,6 +21,7 @@ final class DatabaseSeeder extends Seeder
             PartnerSeeder::class,
             AdminUserSeeder::class,
             PolicySeeder::class,
+            ArticleScheduleSettingsSeeder::class,
         ]);
     }
 }

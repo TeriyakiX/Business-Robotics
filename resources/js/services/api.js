@@ -131,8 +131,15 @@ export const policiesAPI = {
 // ========== НАСТРОЙКИ САЙТА ==========
 export const settingsAPI = {
     getPublic: () => api.get('/settings'),
+    createCategory: (data) => api.post('/admin/categories', data).then(r => r.data),
+    getCategories: () => api.get('/admin/categories').then(r => r.data),
     getAll: () => api.get('/admin/settings'),
-
+    getSchedule: ()           => api.get('/admin/articles/schedule').then(r => r.data),
+    updateSchedule: (data)    => api.put('/admin/articles/schedule', data).then(r => r.data),
+    getGenerationSettings: () => api.get('/admin/articles/generation-settings').then(r => r.data),
+    saveGenerationSettings: (data) => api.post('/admin/articles/generation-settings', data).then(r => r.data),
+    generateArticle: (data)   => api.post('/admin/articles/generate', data).then(r => r.data),
+    getRecentArticles: ()     => api.get('/admin/articles?per_page=5&sort=created_at&order=desc').then(r => r.data),
     // Универсальное обновление
     updateSettings: (data) => api.post('/admin/settings', data),
 

@@ -704,12 +704,23 @@ const removeNewGalleryImage = (idx) => {
 const fetchItems = async () => {
     loading.value = true;
     try {
-        const params = {};
+        const params = {
+            sort: 'created_at',
+            order: 'desc'
+        };
         if (filters.search) params.search = filters.search;
         if (filters.category) params.category = filters.category;
         if (filters.is_published !== '') params.is_published = filters.is_published === 'true';
         const response = await articlesAPI.getAll(params);
-        items.value = response.data || response || [];
+        let fetchedItems = response.data || response || [];
+
+        fetchedItems.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+            const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+            return dateB - dateA;
+        });
+
+        items.value = fetchedItems;
     } catch (error) {
         console.error('Error fetching articles:', error);
     } finally {
@@ -801,6 +812,7 @@ const submitForm = async () => {
 
         closeModal();
         await fetchItems();
+
         alert('Статья успешно сохранена!');
     } catch (error) {
         console.error('Error saving article:', error);

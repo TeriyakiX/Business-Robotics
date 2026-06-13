@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\ArticleScheduleController;
 use App\Http\Controllers\Api\CaseController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactController;
@@ -71,7 +72,11 @@ Route::prefix('v1')->group(function () {
         // Articles CRUD
         Route::get('/articles', [ArticleController::class, 'list']);
         Route::get('/articles/generation-settings', [ArticleController::class, 'getGenerationSettings']);
+        Route::post('/articles/generation-settings', [ArticleScheduleController::class, 'updateGenerationSettings']);
         Route::post('/articles/generate', [ArticleController::class, 'generate']);
+        Route::get('/articles/schedule', [ArticleScheduleController::class, 'show']);
+        Route::put('/articles/schedule', [ArticleScheduleController::class, 'update']);
+
         Route::get('/articles/{id}', [ArticleController::class, 'item']);
         Route::post('/articles', [ArticleController::class, 'create']);
         Route::put('/articles/{id}', [ArticleController::class, 'update']);
