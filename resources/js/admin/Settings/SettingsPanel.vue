@@ -433,7 +433,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
-import { settingsAPI } from '../services/api.js';
+import { settingsAPI } from '../../services/api';
 
 const activeTab = ref('hero');
 const saving = ref(false);
