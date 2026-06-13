@@ -277,7 +277,7 @@
             <div v-if="activeTab === 'article_generation'" class="settings-section">
                 <h2>Автогенерация статей</h2>
                 <p class="section-desc">
-                    Статьи генерируются через Claude AI по расписанию. Запуск вручную — в разделе «Статьи».
+                    Статьи генерируются через Claude AI по расписанию. Категорию можно изменить в разделе «Статьи» после создания.
                 </p>
 
                 <div class="status-bar" :class="statusClass">
@@ -294,43 +294,6 @@
                     <textarea v-model="genForm.prompt" rows="5" class="form-textarea"
                               placeholder="Например: Как роботы меняют логистику в 2025 году" />
                     <span class="hint">Если поле пустое — используется встроенный промпт</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Категория статьи</label>
-                    <div v-if="categoriesLoading" class="categories-loading">Загружаем категории...</div>
-                    <div v-else class="br-searchable-select-wrap" ref="categorySelectRef">
-                        <div class="br-searchable-select" :class="{ focused: categoryDropdownOpen }" @click="toggleCategoryDropdown">
-                            <span class="br-searchable-value" :class="{ placeholder: !genForm.category_id }">
-                                {{ getSelectedCategoryName() || 'Выберите категорию' }}
-                            </span>
-                            <svg class="br-select-arrow" :class="{ open: categoryDropdownOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 12 15 18 9"/>
-                            </svg>
-                        </div>
-                        <div v-if="categoryDropdownOpen" class="br-dropdown-panel">
-                            <div class="br-dropdown-search">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8"/>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                                </svg>
-                                <input type="text" v-model="categorySearch" placeholder="Поиск категории..." @click.stop ref="categorySearchInput" />
-                            </div>
-                            <div class="br-dropdown-options">
-                                <div class="br-dropdown-option" :class="{ selected: !genForm.category_id }" @click="selectCategory(null)">Все категории</div>
-                                <div v-for="cat in filteredCategories" :key="cat.id" class="br-dropdown-option" :class="{ selected: genForm.category_id === cat.id }" @click="selectCategory(cat.id)">
-                                    {{ cat.name }}
-                                </div>
-                                <div v-if="categorySearch && !categoryExists(categorySearch)" class="br-dropdown-option br-dropdown-option-new" @click="createNewCategory(categorySearch)">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <line x1="12" y1="5" x2="12" y2="19"/>
-                                        <line x1="5" y1="12" x2="19" y2="12"/>
-                                    </svg>
-                                    Создать «{{ categorySearch }}»
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <h3>Расписание</h3>
@@ -393,7 +356,7 @@
                             <span>час (0-23)</span>
                             <span>день (1-31)</span>
                             <span>месяц (1-12)</span>
-                            <span>день нед. (0-6)</span>
+                            <span>день недели (0-6)</span>
                         </div>
                         <div class="cron-examples">
                             <span class="hint">Быстрый выбор:</span>
@@ -419,7 +382,7 @@
                 <div v-else class="recent-list">
                     <div v-for="article in recentArticles" :key="article.id" class="recent-item">
                         <div class="recent-meta">
-                            <span class="recent-cat">{{ article.category?.name || getCategoryName(article.category_id) || '—' }}</span>
+                            <span class="recent-cat">{{ article.category?.name || '—' }}</span>
                             <span class="recent-date">{{ formatArticleDate(article.published_at || article.created_at) }}</span>
                         </div>
                         <div class="recent-title">{{ article.title }}</div>
@@ -518,12 +481,6 @@ const recentArticles = ref([]);
 const categories = ref([]);
 const categoriesLoading = ref(false);
 
-// Category select
-const categorySelectRef = ref(null);
-const categoryDropdownOpen = ref(false);
-const categorySearch = ref('');
-const categorySearchInput = ref(null);
-
 const genForm = reactive({
     enabled: true,
     mode: 'preset',
@@ -554,15 +511,6 @@ const minDateTime = computed(() => {
     return now.toISOString().slice(0, 16);
 });
 
-const filteredCategories = computed(() => {
-    if (!categorySearch.value) return categories.value;
-    const search = categorySearch.value.toLowerCase();
-    return categories.value.filter(cat =>
-        cat.name.toLowerCase().includes(search) ||
-        cat.slug.toLowerCase().includes(search)
-    );
-});
-
 const statusClass = computed(() => {
     if (!genForm.enabled) return 'status-off';
     if (genForm.mode === 'once' && onceFired.value) return 'status-done';
@@ -582,59 +530,6 @@ const nextRunLabel = computed(() => {
     if (genForm.mode === 'custom') return `cron: ${genForm.cron}`;
     return '';
 });
-
-const getSelectedCategoryName = () => {
-    if (!genForm.category_id) return '';
-    const cat = categories.value.find(c => c.id === genForm.category_id);
-    return cat?.name || '';
-};
-
-const getCategoryName = (id) => {
-    if (!id) return null;
-    const found = categories.value.find(c => String(c.id) === String(id));
-    return found?.name || null;
-};
-
-const categoryExists = (search) => {
-    const q = search.toLowerCase().trim();
-    return categories.value.some(c => c.name.toLowerCase() === q || c.slug.toLowerCase() === q);
-};
-
-const createNewCategory = async (name) => {
-    try {
-        const response = await settingsAPI.createCategory({ name });
-        await loadCategories();
-        if (response.id) {
-            selectCategory(response.id);
-        } else if (categories.value.length > 0) {
-            const newCat = categories.value.find(c => c.name === name);
-            if (newCat) selectCategory(newCat.id);
-        }
-        categorySearch.value = '';
-    } catch (error) {
-        console.error('Error creating category:', error);
-    }
-};
-
-const selectCategory = (id) => {
-    genForm.category_id = id;
-    categoryDropdownOpen.value = false;
-    categorySearch.value = '';
-};
-
-const toggleCategoryDropdown = () => {
-    categoryDropdownOpen.value = !categoryDropdownOpen.value;
-    if (categoryDropdownOpen.value) {
-        categorySearch.value = '';
-        nextTick(() => categorySearchInput.value?.focus());
-    }
-};
-
-const handleClickOutside = (e) => {
-    if (categorySelectRef.value && !categorySelectRef.value.contains(e.target)) {
-        categoryDropdownOpen.value = false;
-    }
-};
 
 const formatDateTime = (dateTime) => {
     if (!dateTime) return '';
@@ -682,7 +577,6 @@ const loadGenSettings = async () => {
             onceDateTime.value = dt.toISOString().slice(0, 16);
         }
         genForm.prompt = g.prompt ?? '';
-        genForm.category_id = g.category_id ?? g.category ?? null;
     } catch (e) {
         console.error('Ошибка загрузки настроек:', e);
     }
@@ -716,7 +610,6 @@ const saveSchedule = async () => {
         });
         await settingsAPI.saveGenerationSettings({
             prompt: genForm.prompt,
-            category_id: genForm.category_id ? parseInt(genForm.category_id) : null,
         });
         alert('Расписание сохранено');
         await loadGenSettings();
@@ -995,11 +888,9 @@ onMounted(() => {
     loadCategories();
     loadGenSettings();
     loadRecentArticles();
-    document.addEventListener('mousedown', handleClickOutside);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
@@ -1065,31 +956,6 @@ onUnmounted(() => {
 
 .categories-loading { color: #5A7A95; font-size: 13px; padding: 10px 0; }
 
-/* Searchable select */
-.br-searchable-select-wrap { position: relative; width: 100%; }
-.br-searchable-select { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 14px; background: #283D55; border: 1px solid rgba(0,180,230,0.22); border-radius: 12px; font-size: 14px; color: #E8F0F8; transition: all 0.2s; }
-.br-searchable-select:hover { border-color: rgba(0,207,255,0.45); }
-.br-searchable-select.focused { border-color: #00CFFF; box-shadow: 0 0 0 3px rgba(0,207,255,0.1); }
-.br-searchable-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.br-searchable-value.placeholder { color: #5A7A95; }
-.br-select-arrow { flex-shrink: 0; stroke: #5A7A95; transition: transform 0.2s; }
-.br-select-arrow.open { transform: rotate(180deg); }
-
-.br-dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #1A2D42; border: 1px solid rgba(0,207,255,0.3); border-radius: 12px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.4); overflow: hidden; }
-.br-dropdown-search { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid rgba(0,180,230,0.15); }
-.br-dropdown-search svg { stroke: #5A7A95; flex-shrink: 0; }
-.br-dropdown-search input { border: none; background: transparent; outline: none; font-size: 13px; color: #E8F0F8; width: 100%; }
-.br-dropdown-search input::placeholder { color: #5A7A95; }
-.br-dropdown-options { max-height: 220px; overflow-y: auto; padding: 4px; }
-.br-dropdown-options::-webkit-scrollbar { width: 4px; }
-.br-dropdown-options::-webkit-scrollbar-track { background: transparent; }
-.br-dropdown-options::-webkit-scrollbar-thumb { background: rgba(0,180,230,0.3); border-radius: 4px; }
-.br-dropdown-option { padding: 9px 12px; font-size: 13px; color: #C0D8EE; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
-.br-dropdown-option:hover { background: rgba(0,207,255,0.1); color: #E8F0F8; }
-.br-dropdown-option.selected { background: rgba(0,207,255,0.15); color: #00CFFF; }
-.br-dropdown-option-new { color: #00CFFF; border-top: 1px solid rgba(0,180,230,0.15); margin-top: 2px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-.br-dropdown-option-new svg { stroke: #00CFFF; flex-shrink: 0; }
-
 .mode-switcher { display: flex; gap: 8px; flex-wrap: wrap; }
 .mode-switcher button { padding: 9px 20px; border-radius: 10px; border: 1px solid rgba(0,180,230,0.22); background: transparent; color: #94B4CC; font-size: 14px; cursor: pointer; }
 .mode-switcher button.active { background: rgba(0,207,255,0.15); border-color: rgba(0,207,255,0.45); color: #00CFFF; }
@@ -1130,7 +996,5 @@ onUnmounted(() => {
     .icon-grid { gap: 8px; }
     .icon-option { min-width: 60px; padding: 10px; }
     .cron-helper { flex-direction: column; gap: 4px; }
-    .br-dropdown-panel { position: fixed; left: 12px; right: 12px; width: auto; top: auto; bottom: 12px; max-height: 60vh; }
-    .br-dropdown-options { max-height: 45vh; }
 }
 </style>

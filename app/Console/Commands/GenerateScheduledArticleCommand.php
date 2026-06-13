@@ -60,7 +60,6 @@ PROMPT;
         $shouldRun = false;
 
         if ($mode === 'once') {
-            // Режим "Один раз"
             if (($settings['article_schedule_once_fired'] ?? '0') === '1') {
                 $this->info('One-time generation already fired. Skipping.');
                 return self::SUCCESS;
@@ -74,17 +73,15 @@ PROMPT;
 
             $target = Carbon::parse($onceAt);
             $nowFlat = $now->copy()->startOfMinute();
+            $targetFlat = $target->copy()->startOfMinute();
 
-            if ($nowFlat->equalTo($target->startOfMinute())) {
+            if ($nowFlat->equalTo($targetFlat)) {
                 $shouldRun = true;
                 $this->markOnceFired();
-                $this->info('One-time schedule matched, running...');
             } else {
                 if ($now->isAfter($target)) {
-                    $this->warn("One-time schedule missed (was {$target}). Marking as fired.");
                     $this->markOnceFired();
                 }
-                $this->info('Not time for one-time schedule. Target: ' . $target);
                 return self::SUCCESS;
             }
 
@@ -100,22 +97,18 @@ PROMPT;
             ];
             $cron = $presets[$preset] ?? '0 9 * * 1';
 
-            if ($this->checkCronTime($cron, $now)) {
+            if (CronExpression::factory($cron)->isDue($now)) {
                 $shouldRun = true;
-                $this->info("Preset '{$preset}' matched, running...");
             } else {
-                $this->info("Not time for preset '{$preset}'. Cron: {$cron}");
                 return self::SUCCESS;
             }
 
         } elseif ($mode === 'custom') {
             $cron = $settings['article_schedule_cron'] ?? '0 9 * * 1';
 
-            if ($this->checkCronTime($cron, $now)) {
+            if (CronExpression::factory($cron)->isDue($now)) {
                 $shouldRun = true;
-                $this->info("Custom cron '{$cron}' matched, running...");
             } else {
-                $this->info("Not time for custom cron: {$cron}");
                 return self::SUCCESS;
             }
         } else {
@@ -123,63 +116,26 @@ PROMPT;
             return self::FAILURE;
         }
 
-        // ========== ГЕНЕРАЦИЯ ==========
         if (!$shouldRun) {
             return self::SUCCESS;
         }
 
         $prompt = $settings['article_generation_prompt'] ?? null;
         if (!$prompt) {
-            $this->warn('No prompt in DB — using built-in default prompt.');
             $prompt = self::DEFAULT_PROMPT;
         }
 
         $categorySlug = $settings['article_generation_category_slug'] ?? 'technology';
 
-        $category = DB::table('categories')->where('slug', $categorySlug)->first();
-        if (!$category) {
-            $this->warn("Category with slug '{$categorySlug}' not found, creating it.");
-            $categoryId = DB::table('categories')->insertGetId([
-                'slug' => $categorySlug,
-                'name' => $categorySlug,
-                'color' => '#00CFFF',
-                'bg_color' => 'rgba(0,207,255,0.08)',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $category = (object) ['id' => $categoryId, 'slug' => $categorySlug];
-        }
-
         GenerateArticleJob::dispatch($prompt, $categorySlug);
 
-        $this->info("✅ Dispatched. Category slug: \"{$categorySlug}\"");
+        $this->info("Dispatched. Category slug: {$categorySlug}");
         Log::info('GenerateScheduledArticleCommand: dispatched', [
             'category_slug' => $categorySlug,
             'mode' => $mode,
-            'has_prompt' => !empty($prompt)
         ]);
 
         return self::SUCCESS;
-    }
-
-    /**
-     * Проверяет, совпадает ли текущее время с cron-выражением
-     */
-    private function checkCronTime(string $cron, Carbon $now): bool
-    {
-        try {
-            $cronExpression = CronExpression::factory($cron);
-            $nextRun = $cronExpression->getNextRunDate();
-            $lastRun = $cronExpression->getPreviousRunDate();
-
-            $nowFlat = $now->copy()->startOfMinute();
-            $lastRunFlat = Carbon::parse($lastRun)->startOfMinute();
-
-            return $nowFlat->equalTo($lastRunFlat);
-        } catch (\Exception $e) {
-            Log::error('Cron parse error', ['cron' => $cron, 'error' => $e->getMessage()]);
-            return false;
-        }
     }
 
     private function markOnceFired(): void
