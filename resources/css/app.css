@@ -2,21 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@media (min-width: 1280px) {
-    html {
-        zoom: 0.65;
-    }
-
-    /* Для Firefox */
-    @-moz-document url-prefix() {
-        html {
-            transform: scale(0.85);
-            transform-origin: top center;
-            width: 117%;
-        }
-    }
-}
-
 @layer base {
     * {
         box-sizing: border-box;
