@@ -4,13 +4,13 @@
             <div class="section-head">
                 <div class="section-pill dark">
                     <span class="dot" style="background: #00CFFF;"></span>
-                    {{ settingsStore.cta.cta_pill || 'Процесс' }}
+                    {{ processData.process_pill || 'Процесс' }}
                 </div>
                 <h2 class="section-h" style="color: white;">
-                    Запуск за <span class="glow-text">14 дней</span>
+                    {{ processData.process_title || 'Запуск за' }} <span class="glow-text">{{ processData.process_title_highlight || '14 дней' }}</span>
                 </h2>
                 <p class="section-sub" style="color: #94B4CC;">
-                    {{ settingsStore.cta.cta_subtitle || 'От консультации до полноценной работы агента — без сложностей' }}
+                    {{ processData.process_subtitle || 'От консультации до полноценной работы агента — без сложностей' }}
                 </p>
             </div>
 
@@ -33,20 +33,52 @@
 </template>
 
 <script setup>
-import { useSettingsStore } from '@/stores/settingsStore';
+import { ref, computed, onMounted } from 'vue';
+import { settingsAPI } from '@/services/api';
 
-defineProps({
+const props = defineProps({
     steps: {
         type: Array,
         default: () => []
     }
 });
 
-const settingsStore = useSettingsStore();
+const settingsData = ref({});
+const loading = ref(true);
+
+const loadSettings = async () => {
+    try {
+        loading.value = true;
+        const response = await settingsAPI.getAll();
+        const data = response.data || {};
+        settingsData.value = data;
+        console.log('✅ Process settings loaded:', data.process);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки настроек:', error);
+        settingsData.value = {};
+    } finally {
+        loading.value = false;
+    }
+};
+
+const processData = computed(() => {
+    const process = settingsData.value.process || {};
+
+    return {
+        process_pill: process.process_pill || 'Процесс',
+        process_title: process.process_title || 'Запуск за',
+        process_title_highlight: process.process_title_highlight || '14 дней',
+        process_subtitle: process.process_subtitle || 'От консультации до полноценной работы агента — без сложностей'
+    };
+});
 
 const formatNumber = (num) => {
     return num.toString().padStart(2, '0');
 };
+
+onMounted(() => {
+    loadSettings();
+});
 </script>
 
 <style scoped>

@@ -40,7 +40,9 @@ final class SettingsResource extends JsonResource
 
             // ========== AGENTS SECTION ==========
             'agents' => [
-                'agents_title' => $agents['agents_title'] ?? 'AI-агенты для каждой задачи',
+                'agents_pill' => $agents['agents_pill'] ?? 'Продукты',
+                'agents_title' => $agents['agents_title'] ?? 'AI-агенты',
+                'agents_title_suffix' => $agents['agents_title_suffix'] ?? 'для каждой задачи',
                 'agents_subtitle' => $agents['agents_subtitle'] ?? 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс',
             ],
 
@@ -56,24 +58,28 @@ final class SettingsResource extends JsonResource
 
             // ========== PROCESS SECTION ==========
             'process' => [
-                'process_title' => $process['process_title'] ?? 'Запуск за 14 дней',
+                'process_pill' => $process['process_pill'] ?? 'Процесс',
+                'process_title' => $process['process_title'] ?? 'Запуск за',
+                'process_title_highlight' => $process['process_title_highlight'] ?? '14 дней',
                 'process_subtitle' => $process['process_subtitle'] ?? 'От консультации до полноценной работы агента — без сложностей',
             ],
 
             // ========== BLOG SECTION ==========
             'blog' => [
-                'blog_title' => $blog['blog_title'] ?? 'Мир роботов',
+                'blog_pill' => $blog['blog_pill'] ?? 'Блог',
+                'blog_title' => $blog['blog_title'] ?? 'Мир',
+                'blog_title_highlight' => $blog['blog_title_highlight'] ?? 'роботов',
                 'blog_subtitle' => $blog['blog_subtitle'] ?? 'Последние разработки в сфере роботехники и AI — только важное',
+                'blog_more_button' => $blog['blog_more_button'] ?? 'Читать ещё статьи',
+                'blog_hide_button' => $blog['blog_hide_button'] ?? 'Скрыть статьи',
             ],
 
             // ========== PARTNERS SECTION ==========
             'partners' => [
-                // Заголовки секции
                 'partners_pill' => $partners['partners_pill'] ?? 'Партнёрам',
                 'partners_title' => $partners['partners_title'] ?? 'Зарабатывайте вместе с Business Robotics',
                 'partners_subtitle' => $partners['partners_subtitle'] ?? 'Приводите клиентов — мы закрываем всё остальное. Получайте % с каждой сделки без вложений.',
 
-                // Карточка 1 (Разработка)
                 'partner_variant1_badge' => $partners['partner_variant1_badge'] ?? 'Вариант 1',
                 'partner_variant1_title' => $partners['partner_variant1_title'] ?? 'Разработка продукта',
                 'partner_variant1_desc' => $partners['partner_variant1_desc'] ?? 'Партнёр получает процент от стоимости разработки, которую оплачивает клиент. Разовый платёж — сразу после закрытия сделки.',
@@ -83,7 +89,6 @@ final class SettingsResource extends JsonResource
                 'partner_variant1_amount_value' => $partners['partner_variant1_amount_value'] ?? 'от 100 тыс ₽',
                 'partner_variant1_tags' => isset($partners['partner_variant1_tags']) ? json_decode($partners['partner_variant1_tags'], true) : ['Голосовые роботы', 'Чат-боты', 'AI-агенты'],
 
-                // Карточка 2 (Подписка)
                 'partner_variant2_badge' => $partners['partner_variant2_badge'] ?? 'Вариант 2',
                 'partner_variant2_title' => $partners['partner_variant2_title'] ?? 'Подписка клиента',
                 'partner_variant2_desc' => $partners['partner_variant2_desc'] ?? 'Партнёр получает процент от первого платежа клиента по подписке. Выплата сразу после оплаты клиентом — без ожидания.',
@@ -93,7 +98,6 @@ final class SettingsResource extends JsonResource
                 'partner_variant2_amount_value' => $partners['partner_variant2_amount_value'] ?? 'от 30 тыс ₽/мес',
                 'partner_variant2_tags' => isset($partners['partner_variant2_tags']) ? json_decode($partners['partner_variant2_tags'], true) : ['AI-Consultant', 'AI-LeadGen', 'AI-Manager'],
 
-                // Earn карточка
                 'partner_earn_min_label' => $partners['partner_earn_min_label'] ?? 'Мин. доход с клиента',
                 'partner_earn_min_value' => $partners['partner_earn_min_value'] ?? 'от 20 000 ₽',
                 'partner_earn_min_note' => $partners['partner_earn_min_note'] ?? 'разовая выплата',
@@ -104,7 +108,6 @@ final class SettingsResource extends JsonResource
                 'partner_earn_audit_value' => $partners['partner_earn_audit_value'] ?? 'бесплатно',
                 'partner_earn_audit_note' => $partners['partner_earn_audit_note'] ?? 'мы берём расходы на себя',
 
-                // Шаги программы
                 'partner_steps_title' => $partners['partner_steps_title'] ?? 'Как работает программа',
                 'partner_step1_num' => $partners['partner_step1_num'] ?? '1',
                 'partner_step1_title' => $partners['partner_step1_title'] ?? 'Передайте контакт',
@@ -119,7 +122,6 @@ final class SettingsResource extends JsonResource
                 'partner_step4_title' => $partners['partner_step4_title'] ?? 'Выплата после оплаты клиентом',
                 'partner_step4_desc' => $partners['partner_step4_desc'] ?? 'Получаете партнёрский % сразу после того, как клиент оплатил. Прозрачно и без задержек.',
 
-                // Почему выбирают нас
                 'partner_why_title' => $partners['partner_why_title'] ?? 'Почему партнёры выбирают нас',
                 'partner_why1_title' => $partners['partner_why1_title'] ?? 'Без вложений и рисков',
                 'partner_why1_desc' => $partners['partner_why1_desc'] ?? 'Вы только передаёте контакт. Продажи, внедрение, поддержка — всё на нас.',
@@ -130,7 +132,6 @@ final class SettingsResource extends JsonResource
                 'partner_why4_title' => $partners['partner_why4_title'] ?? 'Высокая конверсия',
                 'partner_why4_desc' => $partners['partner_why4_desc'] ?? 'Бесплатный аудит снижает барьер для клиента — большинство аудитов заканчиваются сделкой.',
 
-                // CTA партнёров
                 'partners_cta_label' => $partners['partners_cta_label'] ?? 'Станьте партнёром',
                 'partners_cta_title' => $partners['partners_cta_title'] ?? 'Готовы начать зарабатывать?',
                 'partners_cta_desc' => $partners['partners_cta_desc'] ?? 'Передайте первый контакт — мы проведём аудит, подберём продукт и закроем внедрение. Аудит бесплатный.',
@@ -182,6 +183,7 @@ final class SettingsResource extends JsonResource
                 'footer_phone' => $footer['footer_phone'] ?? '8 800 123-45-67',
                 'footer_email' => $footer['footer_email'] ?? 'hello@biz-robotics.ru',
                 'footer_telegram' => $footer['footer_telegram'] ?? 'https://t.me/bizroboticsbot',
+                'footer_telegram_text' => $footer['footer_telegram_text'] ?? '@bizroboticsbot',
                 'footer_copyright' => $footer['footer_copyright'] ?? '© 2026 Business Robotics. Все права защищены.',
             ],
 

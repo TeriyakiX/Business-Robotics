@@ -41,17 +41,37 @@
                     </div>
                 </div>
 
-                <div class="br-admin-filter-group">
+                <!-- НОВЫЙ КРАСИВЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ -->
+                <div class="br-admin-filter-group br-filter-status-wrap" ref="filterStatusRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
-                    <select v-model="filters.is_published" @change="fetchItems">
-                        <option value="">Все статусы</option>
-                        <option value="true">Опубликованные</option>
-                        <option value="false">Черновики</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterStatusDropdown">
+                        <span class="br-searchable-value">
+                            {{ getStatusLabel(filters.is_published) }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterStatusOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterStatusOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_published === '' }" @click="selectFilterStatus('')">
+                                <span class="br-status-dot br-status-dot-all"></span>
+                                Все статусы
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_published === 'true' }" @click="selectFilterStatus('true')">
+                                <span class="br-status-dot br-status-dot-published"></span>
+                                Опубликованные
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_published === 'false' }" @click="selectFilterStatus('false')">
+                                <span class="br-status-dot br-status-dot-draft"></span>
+                                Черновики
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button @click="openModal()" class="br-admin-btn-primary">
@@ -509,6 +529,26 @@ const selectFilterCategory = (value) => {
     fetchItems();
 };
 
+// ===== НОВЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ =====
+const filterStatusRef = ref(null);
+const filterStatusOpen = ref(false);
+
+const getStatusLabel = (value) => {
+    if (value === 'true') return 'Опубликованные';
+    if (value === 'false') return 'Черновики';
+    return 'Все статусы';
+};
+
+const toggleFilterStatusDropdown = () => {
+    filterStatusOpen.value = !filterStatusOpen.value;
+};
+
+const selectFilterStatus = (value) => {
+    filters.is_published = value;
+    filterStatusOpen.value = false;
+    fetchItems();
+};
+
 // ===== AI CATEGORY =====
 const aiCategoryRef = ref(null);
 const aiCategoryOpen = ref(false);
@@ -565,6 +605,9 @@ const createAndSelectFormCategory = async (label) => {
 const handleClickOutside = (e) => {
     if (filterCategoryRef.value && !filterCategoryRef.value.contains(e.target)) {
         filterCategoryOpen.value = false;
+    }
+    if (filterStatusRef.value && !filterStatusRef.value.contains(e.target)) {
+        filterStatusOpen.value = false;
     }
     if (aiCategoryRef.value && !aiCategoryRef.value.contains(e.target)) {
         aiCategoryOpen.value = false;
@@ -888,12 +931,14 @@ onUnmounted(() => {
     position: relative;
 }
 
-.br-filter-category-wrap {
+.br-filter-category-wrap,
+.br-filter-status-wrap {
     padding: 0;
     overflow: visible;
 }
 
-.br-filter-category-wrap > svg {
+.br-filter-category-wrap > svg,
+.br-filter-status-wrap > svg {
     position: absolute;
     left: 14px;
     top: 50%;
@@ -904,7 +949,8 @@ onUnmounted(() => {
     z-index: 1;
 }
 
-.br-filter-category-wrap .br-searchable-select {
+.br-filter-category-wrap .br-searchable-select,
+.br-filter-status-wrap .br-searchable-select {
     padding-left: 40px;
     padding-right: 32px;
     min-width: 180px;
@@ -1077,6 +1123,27 @@ onUnmounted(() => {
     text-align: center;
     font-size: 13px;
     color: #5A7A95;
+}
+
+/* Статусные точки в селекте статусов */
+.br-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.br-status-dot-all {
+    background: #5A7A95;
+}
+
+.br-status-dot-published {
+    background: #34D399;
+}
+
+.br-status-dot-draft {
+    background: #ef4444;
 }
 
 /* ===== LOADING ===== */
@@ -1787,6 +1854,11 @@ onUnmounted(() => {
     .br-ai-category-group .br-searchable-select-wrap {
         max-width: 100%;
     }
+
+    .br-filter-category-wrap .br-searchable-select,
+    .br-filter-status-wrap .br-searchable-select {
+        min-width: 140px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -1811,7 +1883,8 @@ onUnmounted(() => {
         width: 100%;
     }
 
-    .br-filter-category-wrap .br-searchable-select {
+    .br-filter-category-wrap .br-searchable-select,
+    .br-filter-status-wrap .br-searchable-select {
         min-width: 0;
         width: 100%;
     }

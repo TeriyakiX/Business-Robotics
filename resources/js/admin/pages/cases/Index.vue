@@ -10,33 +10,70 @@
                     </svg>
                     <input type="text" v-model="filters.search" placeholder="Поиск кейсов..." @input="debouncedFetch"/>
                 </div>
-                <div class="br-admin-filter-group">
+
+                <!-- КАСТОМНЫЙ СЕЛЕКТ ДЛЯ ОТРАСЛЕЙ -->
+                <div class="br-admin-filter-group br-filter-industry-wrap" ref="filterIndustryRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="4" width="18" height="18" rx="2"/>
                         <line x1="16" y1="2" x2="16" y2="6"/>
                         <line x1="8" y1="2" x2="8" y2="6"/>
                         <line x1="3" y1="10" x2="21" y2="10"/>
                     </svg>
-                    <select v-model="filters.industry" @change="fetchItems">
-                        <option value="">Все отрасли</option>
-                        <option value="medical">Медицина</option>
-                        <option value="fitness">Фитнес</option>
-                        <option value="legal">Юриспруденция</option>
-                        <option value="realty">Недвижимость</option>
-                        <option value="auto">Автосервис</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterIndustryDropdown">
+                        <span class="br-searchable-value">
+                            {{ getIndustryLabel(filters.industry) || 'Все отрасли' }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterIndustryOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterIndustryOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.industry === '' }" @click="selectFilterIndustry('')">
+                                Все отрасли
+                            </div>
+                            <div v-for="(label, key) in industryLabels" :key="key"
+                                 class="br-dropdown-option"
+                                 :class="{ selected: filters.industry === key }"
+                                 @click="selectFilterIndustry(key)">
+                                <span class="br-industry-dot" :style="{ background: industryColors[key] }"></span>
+                                {{ label }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="br-admin-filter-group">
+
+                <!-- КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ -->
+                <div class="br-admin-filter-group br-filter-status-wrap" ref="filterStatusRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
-                    <select v-model="filters.is_visible" @change="fetchItems">
-                        <option value="">Все статусы</option>
-                        <option value="true">Видимые</option>
-                        <option value="false">Скрытые</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterStatusDropdown">
+                        <span class="br-searchable-value">
+                            {{ getStatusLabel(filters.is_visible) }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterStatusOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterStatusOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_visible === '' }" @click="selectFilterStatus('')">
+                                <span class="br-status-dot br-status-dot-all"></span>
+                                Все статусы
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_visible === 'true' }" @click="selectFilterStatus('true')">
+                                <span class="br-status-dot br-status-dot-visible"></span>
+                                Видимые
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_visible === 'false' }" @click="selectFilterStatus('false')">
+                                <span class="br-status-dot br-status-dot-hidden"></span>
+                                Скрытые
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button @click="openModal" class="br-admin-btn-primary">
@@ -220,10 +257,16 @@
                         </div>
                         <div class="br-admin-form-group">
                             <label>Статус</label>
-                            <select v-model="form.is_visible">
-                                <option :value="true">Видим</option>
-                                <option :value="false">Скрыт</option>
-                            </select>
+                            <div class="br-admin-status-options">
+                                <label class="br-admin-radio">
+                                    <input type="radio" :value="true" v-model="form.is_visible"/>
+                                    <span>Видим</span>
+                                </label>
+                                <label class="br-admin-radio">
+                                    <input type="radio" :value="false" v-model="form.is_visible"/>
+                                    <span>Скрыт</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -240,7 +283,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { casesAPI } from '../../services/api';
 
@@ -258,18 +301,13 @@ const filters = reactive({
     is_visible: ''
 });
 
-const form = reactive({
-    title: '',
-    industry: '',
-    client_name: '',
-    client_role: '',
-    client_avatar_initials: '',
-    description: '',
-    testimonial: '',
-    metrics: [],
-    sort_order: 0,
-    is_visible: true
-});
+// ===== КАСТОМНЫЙ СЕЛЕКТ ДЛЯ ОТРАСЛЕЙ =====
+const filterIndustryRef = ref(null);
+const filterIndustryOpen = ref(false);
+
+// ===== КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ =====
+const filterStatusRef = ref(null);
+const filterStatusOpen = ref(false);
 
 const industryLabels = {
     medicine: 'Медицина',
@@ -295,6 +333,55 @@ const industryColors = {
 
 const getIndustryLabel = (industry) => industryLabels[industry] || industry;
 const getIndustryColor = (industry) => industryColors[industry] || '#00CFFF';
+
+const getStatusLabel = (value) => {
+    if (value === 'true') return 'Видимые';
+    if (value === 'false') return 'Скрытые';
+    return 'Все статусы';
+};
+
+// ===== TOGGLE FUNCTIONS =====
+const toggleFilterIndustryDropdown = () => {
+    filterIndustryOpen.value = !filterIndustryOpen.value;
+};
+
+const selectFilterIndustry = (value) => {
+    filters.industry = value;
+    filterIndustryOpen.value = false;
+    fetchItems();
+};
+
+const toggleFilterStatusDropdown = () => {
+    filterStatusOpen.value = !filterStatusOpen.value;
+};
+
+const selectFilterStatus = (value) => {
+    filters.is_visible = value;
+    filterStatusOpen.value = false;
+    fetchItems();
+};
+
+const handleClickOutside = (e) => {
+    if (filterIndustryRef.value && !filterIndustryRef.value.contains(e.target)) {
+        filterIndustryOpen.value = false;
+    }
+    if (filterStatusRef.value && !filterStatusRef.value.contains(e.target)) {
+        filterStatusOpen.value = false;
+    }
+};
+
+const form = reactive({
+    title: '',
+    industry: '',
+    client_name: '',
+    client_role: '',
+    client_avatar_initials: '',
+    description: '',
+    testimonial: '',
+    metrics: [],
+    sort_order: 0,
+    is_visible: true
+});
 
 let debounceTimeout = null;
 const debouncedFetch = () => {
@@ -380,7 +467,6 @@ const submitForm = async () => {
         };
 
         console.log('Submitting case data:', data);
-        console.log('isEdit:', isEdit.value, 'currentId:', currentId.value);
 
         if (isEdit.value && currentId.value) {
             await casesAPI.update(currentId.value, data);
@@ -391,7 +477,6 @@ const submitForm = async () => {
         await fetchItems();
     } catch (error) {
         console.error('Error saving case:', error);
-        console.error('Error response:', error.response?.data);
         alert('Ошибка при сохранении: ' + (error.response?.data?.message || 'Неизвестная ошибка'));
     } finally {
         saving.value = false;
@@ -420,6 +505,11 @@ onMounted(() => {
         return;
     }
     fetchItems();
+    document.addEventListener('mousedown', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
@@ -443,6 +533,8 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 16px;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 100;
 }
 
 .br-admin-filters {
@@ -459,15 +551,45 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.15);
     border-radius: 12px;
+    position: relative;
+    z-index: 101;
 }
 
-.br-admin-filter-group svg {
+.br-filter-industry-wrap,
+.br-filter-status-wrap {
+    padding: 0;
+    overflow: visible;
+    z-index: 102;
+}
+
+.br-filter-industry-wrap > svg,
+.br-filter-status-wrap > svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    stroke: #5A7A95;
+    flex-shrink: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.br-filter-industry-wrap .br-searchable-select,
+.br-filter-status-wrap .br-searchable-select {
+    padding-left: 40px;
+    padding-right: 32px;
+    min-width: 160px;
+    height: 42px;
+    border: none;
+    background: transparent;
+}
+
+.br-admin-filter-group svg:not(.br-select-arrow) {
     stroke: #5A7A95;
     flex-shrink: 0;
 }
 
-.br-admin-filter-group input,
-.br-admin-filter-group select {
+.br-admin-filter-group input {
     border: none;
     font-size: 14px;
     background: transparent;
@@ -480,8 +602,130 @@ onMounted(() => {
     color: #5A7A95;
 }
 
-.br-admin-filter-group select option {
-    background: #213349;
+/* ===== SEARCHABLE SELECT ===== */
+.br-searchable-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+    padding: 11px 14px;
+    background: #283D55;
+    border: 1px solid rgba(0, 180, 230, 0.22);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.br-searchable-select:hover {
+    border-color: rgba(0, 207, 255, 0.45);
+}
+
+.br-searchable-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.br-select-arrow {
+    flex-shrink: 0;
+    stroke: #5A7A95;
+    transition: transform 0.2s;
+}
+
+.br-select-arrow.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel - FIXED Z-INDEX */
+.br-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #1A2D42;
+    border: 1px solid rgba(0, 207, 255, 0.3);
+    border-radius: 12px;
+    z-index: 99999 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.br-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.br-dropdown-options::-webkit-scrollbar-thumb {
+    background: rgba(0, 180, 230, 0.3);
+    border-radius: 4px;
+}
+
+.br-dropdown-option {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #C0D8EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.br-dropdown-option:hover {
+    background: rgba(0, 207, 255, 0.1);
+    color: #E8F0F8;
+}
+
+.br-dropdown-option.selected {
+    background: rgba(0, 207, 255, 0.15);
+    color: #00CFFF;
+}
+
+/* Цветные точки для отраслей */
+.br-industry-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Статусные точки */
+.br-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.br-status-dot-all {
+    background: #5A7A95;
+}
+
+.br-status-dot-visible {
+    background: #34D399;
+}
+
+.br-status-dot-hidden {
+    background: #ef4444;
 }
 
 /* Primary Button */
@@ -557,6 +801,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
     gap: 24px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Card */
@@ -567,6 +813,8 @@ onMounted(() => {
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 1;
 }
 
 .br-admin-item-card:hover {
@@ -701,7 +949,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .br-admin-modal-container {
@@ -810,6 +1058,27 @@ onMounted(() => {
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 20px;
+}
+
+.br-admin-status-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+.br-admin-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #E8F0F8;
+    font-size: 14px;
+}
+
+.br-admin-radio input {
+    width: auto;
+    margin: 0;
 }
 
 .br-admin-modal-footer {
@@ -994,24 +1263,33 @@ onMounted(() => {
     .br-admin-filters-bar {
         flex-direction: column;
         align-items: stretch;
+        padding: 16px 18px;
     }
 
     .br-admin-filters {
         flex-direction: column;
+        width: 100%;
     }
 
     .br-admin-filter-group {
         width: 100%;
+        box-sizing: border-box;
     }
 
-    .br-admin-filter-group input,
-    .br-admin-filter-group select {
+    .br-admin-filter-group input {
         min-width: auto;
+        width: 100%;
+    }
+
+    .br-filter-industry-wrap .br-searchable-select,
+    .br-filter-status-wrap .br-searchable-select {
+        min-width: 0;
         width: 100%;
     }
 
     .br-admin-btn-primary {
         justify-content: center;
+        width: 100%;
     }
 
     .br-admin-items-grid {
@@ -1021,6 +1299,64 @@ onMounted(() => {
     .br-admin-form-row {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .br-admin-modal-container {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+
+    .br-admin-modal-header {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-header h2 {
+        font-size: 18px;
+    }
+
+    .br-admin-modal-form {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .br-admin-btn-cancel,
+    .br-admin-btn-save {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .br-dropdown-panel {
+        position: fixed;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        top: auto !important;
+        bottom: 12px;
+        max-height: 60vh;
+        z-index: 99999 !important;
+    }
+
+    .br-dropdown-options {
+        max-height: 45vh;
+    }
+}
+
+@media (max-width: 400px) {
+    .br-admin-card-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .br-admin-card-actions {
+        flex-direction: column;
+    }
+
+    .br-admin-card-actions button {
+        width: 100%;
     }
 }
 </style>

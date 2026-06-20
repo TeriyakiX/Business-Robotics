@@ -4,12 +4,12 @@
             <div class="section-head">
                 <div class="section-pill light">
                     <span class="dot" style="background: #005FAA;"></span>
-                    Блог
+                    {{ blogData.blog_pill || 'Блог' }}
                 </div>
                 <h2 class="section-h" style="color: #0C1B2E;">
-                    Мир <span class="glow-text">роботов</span>
+                    {{ blogData.blog_title || 'Мир' }} <span class="glow-text">{{ blogData.blog_title_highlight || 'роботов' }}</span>
                 </h2>
-                <p class="section-sub" style="color: #4E6E88;">Последние разработки в сфере роботехники и AI — только важное</p>
+                <p class="section-sub" style="color: #4E6E88;">{{ blogData.blog_subtitle || 'Последние разработки в сфере роботехники и AI — только важное' }}</p>
             </div>
 
             <div class="blog-grid">
@@ -53,7 +53,7 @@
                     @click="showAll = !showAll"
                     class="blog-more-btn"
                 >
-                    {{ showAll ? 'Скрыть статьи' : 'Читать ещё статьи' }}
+                    {{ showAll ? (blogData.blog_hide_button || 'Скрыть статьи') : (blogData.blog_more_button || 'Читать ещё статьи') }}
                     <svg
                         class="blog-more-icon"
                         :class="{ 'rotated': showAll }"
@@ -80,12 +80,10 @@
 
                     <div v-else-if="selectedArticle" class="blog-modal-content">
 
-                        <!-- Hero обложка — на весь верх, крестик поверх -->
                         <div class="blog-modal-hero" :style="selectedArticle.cover_url ? { backgroundImage: `url(${selectedArticle.cover_url})` } : {}">
                             <div class="blog-modal-hero-blur"></div>
                             <div class="blog-modal-hero-gradient"></div>
 
-                            <!-- Крестик поверх hero -->
                             <button @click="closeModal" class="blog-modal-close">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <line x1="18" y1="6" x2="6" y2="18"/>
@@ -93,7 +91,6 @@
                                 </svg>
                             </button>
 
-                            <!-- Категория поверх hero -->
                             <div class="blog-modal-hero-bottom">
                                 <span
                                     class="blog-modal-category"
@@ -104,7 +101,6 @@
                             </div>
                         </div>
 
-                        <!-- Контент -->
                         <div class="blog-modal-inner">
                             <h2 class="blog-modal-title">{{ selectedArticle.title }}</h2>
                             <div class="blog-modal-meta">
@@ -133,7 +129,6 @@
                                 </span>
                             </div>
 
-                            <!-- Слайдер галереи — ДО текста -->
                             <div
                                 v-if="selectedArticle.gallery_urls && selectedArticle.gallery_urls.length"
                                 class="blog-modal-gallery"
@@ -192,6 +187,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { settingsAPI } from '@/services/api';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 
@@ -204,6 +200,37 @@ const props = defineProps({
         type: Array,
         default: () => []
     }
+});
+
+const settingsData = ref({});
+const loading = ref(true);
+
+const loadSettings = async () => {
+    try {
+        loading.value = true;
+        const response = await settingsAPI.getAll();
+        const data = response.data || {};
+        settingsData.value = data;
+        console.log('✅ Blog settings loaded:', data.blog);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки настроек:', error);
+        settingsData.value = {};
+    } finally {
+        loading.value = false;
+    }
+};
+
+const blogData = computed(() => {
+    const blog = settingsData.value.blog || {};
+
+    return {
+        blog_pill: blog.blog_pill || 'Блог',
+        blog_title: blog.blog_title || 'Мир',
+        blog_title_highlight: blog.blog_title_highlight || 'роботов',
+        blog_subtitle: blog.blog_subtitle || 'Последние разработки в сфере роботехники и AI — только важное',
+        blog_more_button: blog.blog_more_button || 'Читать ещё статьи',
+        blog_hide_button: blog.blog_hide_button || 'Скрыть статьи'
+    };
 });
 
 const showAll = ref(false);
@@ -252,6 +279,7 @@ const closeModal = () => {
 };
 
 onMounted(() => {
+    loadSettings();
     checkMobile();
     window.addEventListener('resize', checkMobile);
 });

@@ -22,11 +22,13 @@ final class SettingsSeeder extends Seeder
             ['key' => 'hero_background', 'value' => null, 'group' => 'hero', 'type' => 'image'],
             ['key' => 'hero_media', 'value' => null, 'group' => 'hero', 'type' => 'file'],
             ['key' => 'hero_media_type', 'value' => null, 'group' => 'hero', 'type' => 'text'],
-            // Левый верхний текст в Hero
             ['key' => 'hero_top_text', 'value' => 'Роботы Business Robotics принимают звонки, записывают клиентов и квалифицируют лиды — 24/7, без ошибок и выходных.', 'group' => 'hero', 'type' => 'text'],
 
             // ========== AGENTS SECTION ==========
-            ['key' => 'agents_title', 'value' => 'AI-агенты для каждой задачи', 'group' => 'agents', 'type' => 'text'],
+            // ДОБАВЛЯЕМ НЕДОСТАЮЩИЕ ПОЛЯ
+            ['key' => 'agents_pill', 'value' => 'Продукты', 'group' => 'agents', 'type' => 'text'],
+            ['key' => 'agents_title', 'value' => 'AI-агенты', 'group' => 'agents', 'type' => 'text'],
+            ['key' => 'agents_title_suffix', 'value' => 'для каждой задачи', 'group' => 'agents', 'type' => 'text'],
             ['key' => 'agents_subtitle', 'value' => 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс', 'group' => 'agents', 'type' => 'text'],
 
             // ========== CASES SECTION ==========
@@ -38,15 +40,20 @@ final class SettingsSeeder extends Seeder
             ['key' => 'cases_hide_button', 'value' => 'Скрыть кейсы', 'group' => 'cases', 'type' => 'text'],
 
             // ========== PROCESS SECTION ==========
-            ['key' => 'process_title', 'value' => 'Запуск за 14 дней', 'group' => 'process', 'type' => 'text'],
+            ['key' => 'process_pill', 'value' => 'Процесс', 'group' => 'process', 'type' => 'text'],
+            ['key' => 'process_title', 'value' => 'Запуск за', 'group' => 'process', 'type' => 'text'],
+            ['key' => 'process_title_highlight', 'value' => '14 дней', 'group' => 'process', 'type' => 'text'],
             ['key' => 'process_subtitle', 'value' => 'От консультации до полноценной работы агента — без сложностей', 'group' => 'process', 'type' => 'text'],
 
             // ========== BLOG SECTION ==========
-            ['key' => 'blog_title', 'value' => 'Мир роботов', 'group' => 'blog', 'type' => 'text'],
+            ['key' => 'blog_pill', 'value' => 'Блог', 'group' => 'blog', 'type' => 'text'],
+            ['key' => 'blog_title', 'value' => 'Мир', 'group' => 'blog', 'type' => 'text'],
+            ['key' => 'blog_title_highlight', 'value' => 'роботов', 'group' => 'blog', 'type' => 'text'],
             ['key' => 'blog_subtitle', 'value' => 'Последние разработки в сфере роботехники и AI — только важное', 'group' => 'blog', 'type' => 'text'],
+            ['key' => 'blog_more_button', 'value' => 'Читать ещё статьи', 'group' => 'blog', 'type' => 'text'],
+            ['key' => 'blog_hide_button', 'value' => 'Скрыть статьи', 'group' => 'blog', 'type' => 'text'],
 
             // ========== PARTNERS SECTION ==========
-            // Заголовки секции
             ['key' => 'partners_pill', 'value' => 'Партнёрам', 'group' => 'partners', 'type' => 'text'],
             ['key' => 'partners_title', 'value' => 'Зарабатывайте вместе с Business Robotics', 'group' => 'partners', 'type' => 'text'],
             ['key' => 'partners_subtitle', 'value' => 'Приводите клиентов — мы закрываем всё остальное. Получайте % с каждой сделки без вложений.', 'group' => 'partners', 'type' => 'text'],
@@ -143,6 +150,7 @@ final class SettingsSeeder extends Seeder
             ['key' => 'footer_phone', 'value' => '8 800 123-45-67', 'group' => 'footer', 'type' => 'text'],
             ['key' => 'footer_email', 'value' => 'hello@biz-robotics.ru', 'group' => 'footer', 'type' => 'text'],
             ['key' => 'footer_telegram', 'value' => 'https://t.me/bizroboticsbot', 'group' => 'footer', 'type' => 'text'],
+            ['key' => 'footer_telegram_text', 'value' => '@bizroboticsbot', 'group' => 'footer', 'type' => 'text'],
             ['key' => 'footer_copyright', 'value' => '© 2026 Business Robotics. Все права защищены.', 'group' => 'footer', 'type' => 'text'],
 
             // ========== SOCIALS ==========

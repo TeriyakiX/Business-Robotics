@@ -9,17 +9,38 @@
                     </svg>
                     <input type="text" v-model="filters.search" placeholder="Поиск элементов..." @input="debouncedFetch"/>
                 </div>
-                <div class="br-admin-filter-group">
+
+                <!-- КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ -->
+                <div class="br-admin-filter-group br-filter-status-wrap" ref="filterStatusRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
-                    <select v-model="filters.is_active" @change="fetchItems">
-                        <option value="">Все статусы</option>
-                        <option value="true">Активные</option>
-                        <option value="false">Неактивные</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterStatusDropdown">
+                        <span class="br-searchable-value">
+                            {{ getStatusLabel(filters.is_active) }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterStatusOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterStatusOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_active === '' }" @click="selectFilterStatus('')">
+                                <span class="br-status-dot br-status-dot-all"></span>
+                                Все статусы
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_active === 'true' }" @click="selectFilterStatus('true')">
+                                <span class="br-status-dot br-status-dot-active"></span>
+                                Активные
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.is_active === 'false' }" @click="selectFilterStatus('false')">
+                                <span class="br-status-dot br-status-dot-inactive"></span>
+                                Неактивные
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button @click="openModal" class="br-admin-btn-primary">
@@ -118,10 +139,16 @@
                         </div>
                         <div class="br-admin-form-group">
                             <label>Статус</label>
-                            <select v-model="form.is_active">
-                                <option :value="true">Активен</option>
-                                <option :value="false">Неактивен</option>
-                            </select>
+                            <div class="br-admin-status-options">
+                                <label class="br-admin-radio">
+                                    <input type="radio" :value="true" v-model="form.is_active"/>
+                                    <span>Активен</span>
+                                </label>
+                                <label class="br-admin-radio">
+                                    <input type="radio" :value="false" v-model="form.is_active"/>
+                                    <span>Неактивен</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -138,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { marqueeAPI } from '../../services/api';
 
@@ -154,6 +181,32 @@ const filters = reactive({
     search: '',
     is_active: ''
 });
+
+// ===== КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ =====
+const filterStatusRef = ref(null);
+const filterStatusOpen = ref(false);
+
+const getStatusLabel = (value) => {
+    if (value === 'true') return 'Активные';
+    if (value === 'false') return 'Неактивные';
+    return 'Все статусы';
+};
+
+const toggleFilterStatusDropdown = () => {
+    filterStatusOpen.value = !filterStatusOpen.value;
+};
+
+const selectFilterStatus = (value) => {
+    filters.is_active = value;
+    filterStatusOpen.value = false;
+    fetchItems();
+};
+
+const handleClickOutside = (e) => {
+    if (filterStatusRef.value && !filterStatusRef.value.contains(e.target)) {
+        filterStatusOpen.value = false;
+    }
+};
 
 const form = reactive({
     name: '',
@@ -189,7 +242,7 @@ const fetchItems = async () => {
     try {
         const params = {};
         if (filters.search) params.search = filters.search;
-        if (filters.is_active) params.is_active = filters.is_active === 'true'; // Преобразуем в boolean для GET параметра
+        if (filters.is_active !== '') params.is_active = filters.is_active === 'true';
 
         console.log('Fetch params:', params);
         const response = await marqueeAPI.getAll(params);
@@ -265,6 +318,11 @@ onMounted(() => {
         return;
     }
     fetchItems();
+    document.addEventListener('mousedown', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
@@ -288,6 +346,8 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 16px;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 100;
 }
 
 .br-admin-filters {
@@ -304,20 +364,47 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.15);
     border-radius: 12px;
+    position: relative;
+    z-index: 101;
 }
 
-.br-admin-filter-group svg {
+.br-filter-status-wrap {
+    padding: 0;
+    overflow: visible;
+    z-index: 102;
+}
+
+.br-filter-status-wrap > svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    stroke: #5A7A95;
+    flex-shrink: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.br-filter-status-wrap .br-searchable-select {
+    padding-left: 40px;
+    padding-right: 32px;
+    min-width: 160px;
+    height: 42px;
+    border: none;
+    background: transparent;
+}
+
+.br-admin-filter-group svg:not(.br-select-arrow) {
     stroke: #5A7A95;
     flex-shrink: 0;
 }
 
-.br-admin-filter-group input,
-.br-admin-filter-group select {
+.br-admin-filter-group input {
     border: none;
     font-size: 14px;
     background: transparent;
     outline: none;
-    min-width: 180px;
+    min-width: 160px;
     color: #E8F0F8;
 }
 
@@ -325,8 +412,121 @@ onMounted(() => {
     color: #5A7A95;
 }
 
-.br-admin-filter-group select option {
-    background: #213349;
+/* ===== SEARCHABLE SELECT ===== */
+.br-searchable-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+    padding: 11px 14px;
+    background: #283D55;
+    border: 1px solid rgba(0, 180, 230, 0.22);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.br-searchable-select:hover {
+    border-color: rgba(0, 207, 255, 0.45);
+}
+
+.br-searchable-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.br-select-arrow {
+    flex-shrink: 0;
+    stroke: #5A7A95;
+    transition: transform 0.2s;
+}
+
+.br-select-arrow.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel - FIXED Z-INDEX */
+.br-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #1A2D42;
+    border: 1px solid rgba(0, 207, 255, 0.3);
+    border-radius: 12px;
+    z-index: 99999 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.br-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.br-dropdown-options::-webkit-scrollbar-thumb {
+    background: rgba(0, 180, 230, 0.3);
+    border-radius: 4px;
+}
+
+.br-dropdown-option {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #C0D8EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.br-dropdown-option:hover {
+    background: rgba(0, 207, 255, 0.1);
+    color: #E8F0F8;
+}
+
+.br-dropdown-option.selected {
+    background: rgba(0, 207, 255, 0.15);
+    color: #00CFFF;
+}
+
+/* Статусные точки в селекте */
+.br-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.br-status-dot-all {
+    background: #5A7A95;
+}
+
+.br-status-dot-active {
+    background: #34D399;
+}
+
+.br-status-dot-inactive {
+    background: #ef4444;
 }
 
 /* Primary Button */
@@ -402,6 +602,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
     gap: 24px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Card */
@@ -412,6 +614,8 @@ onMounted(() => {
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 1;
 }
 
 .br-admin-item-card:hover {
@@ -583,7 +787,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .br-admin-modal-container {
@@ -658,9 +862,7 @@ onMounted(() => {
     margin-bottom: 6px;
 }
 
-.br-admin-form-group input,
-.br-admin-form-group textarea,
-.br-admin-form-group select {
+.br-admin-form-group input {
     width: 100%;
     padding: 12px 14px;
     background: #283D55;
@@ -671,16 +873,10 @@ onMounted(() => {
     transition: all 0.2s;
 }
 
-.br-admin-form-group input:focus,
-.br-admin-form-group textarea:focus,
-.br-admin-form-group select:focus {
+.br-admin-form-group input:focus {
     outline: none;
     border-color: #00CFFF;
     box-shadow: 0 0 0 3px rgba(0, 207, 255, 0.1);
-}
-
-.br-admin-form-group select option {
-    background: #213349;
 }
 
 .br-admin-form-row {
@@ -688,6 +884,27 @@ onMounted(() => {
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 20px;
+}
+
+.br-admin-status-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+.br-admin-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #E8F0F8;
+    font-size: 14px;
+}
+
+.br-admin-radio input {
+    width: auto;
+    margin: 0;
 }
 
 .br-admin-modal-footer {
@@ -742,24 +959,32 @@ onMounted(() => {
     .br-admin-filters-bar {
         flex-direction: column;
         align-items: stretch;
+        padding: 16px 18px;
     }
 
     .br-admin-filters {
         flex-direction: column;
+        width: 100%;
     }
 
     .br-admin-filter-group {
         width: 100%;
+        box-sizing: border-box;
     }
 
-    .br-admin-filter-group input,
-    .br-admin-filter-group select {
+    .br-admin-filter-group input {
         min-width: auto;
+        width: 100%;
+    }
+
+    .br-filter-status-wrap .br-searchable-select {
+        min-width: 0;
         width: 100%;
     }
 
     .br-admin-btn-primary {
         justify-content: center;
+        width: 100%;
     }
 
     .br-admin-items-grid {
@@ -769,6 +994,64 @@ onMounted(() => {
     .br-admin-form-row {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .br-admin-modal-container {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+
+    .br-admin-modal-header {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-header h2 {
+        font-size: 18px;
+    }
+
+    .br-admin-modal-form {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .br-admin-btn-cancel,
+    .br-admin-btn-save {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .br-dropdown-panel {
+        position: fixed;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        top: auto !important;
+        bottom: 12px;
+        max-height: 60vh;
+        z-index: 99999 !important;
+    }
+
+    .br-dropdown-options {
+        max-height: 45vh;
+    }
+}
+
+@media (max-width: 400px) {
+    .br-admin-card-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .br-admin-card-actions {
+        flex-direction: column;
+    }
+
+    .br-admin-card-actions button {
+        width: 100%;
     }
 }
 </style>

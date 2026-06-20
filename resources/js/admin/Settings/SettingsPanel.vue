@@ -14,7 +14,7 @@
 
         <div class="settings-content">
 
-            <!-- Hero Settings -->
+            <!-- ========== ГЛАВНЫЙ ЭКРАН ========== -->
             <div v-if="activeTab === 'hero'" class="settings-section">
                 <h2>Главный экран</h2>
                 <div class="form-group"><label>Подзаголовок (eyebrow)</label><input type="text" v-model="form.hero_eyebrow" class="form-input" /></div>
@@ -38,21 +38,139 @@
                 <button @click="saveHero" :disabled="saving" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Sections Settings -->
-            <div v-if="activeTab === 'sections'" class="settings-section">
-                <h2>Заголовки секций</h2>
-                <div class="form-group"><label>Agents - Заголовок</label><input type="text" v-model="form.agents_title" class="form-input" /></div>
-                <div class="form-group"><label>Agents - Подзаголовок</label><input type="text" v-model="form.agents_subtitle" class="form-input" /></div>
-                <div class="form-group"><label>Cases - Заголовок</label><input type="text" v-model="form.cases_title" class="form-input" /></div>
-                <div class="form-group"><label>Cases - Подзаголовок</label><input type="text" v-model="form.cases_subtitle" class="form-input" /></div>
-                <div class="form-group"><label>Process - Заголовок</label><input type="text" v-model="form.process_title" class="form-input" /></div>
-                <div class="form-group"><label>Process - Подзаголовок</label><input type="text" v-model="form.process_subtitle" class="form-input" /></div>
-                <div class="form-group"><label>Blog - Заголовок</label><input type="text" v-model="form.blog_title" class="form-input" /></div>
-                <div class="form-group"><label>Blog - Подзаголовок</label><input type="text" v-model="form.blog_subtitle" class="form-input" /></div>
+            <!-- ========== AI-АГЕНТЫ ========== -->
+            <div v-if="activeTab === 'agents'" class="settings-section">
+                <h2>AI-Агенты</h2>
+                <p class="section-desc">Управление контентом для блока AI-агентов на главной странице</p>
+
+                <div class="form-group">
+                    <label>Плашка (pill)</label>
+                    <input type="text" v-model="form.agents_pill" class="form-input" placeholder="Продукты" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (первая часть)</label>
+                    <input type="text" v-model="form.agents_title" class="form-input" placeholder="AI-агенты" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (вторая часть)</label>
+                    <input type="text" v-model="form.agents_title_suffix" class="form-input" placeholder="для каждой задачи" />
+                </div>
+
+                <div class="form-group">
+                    <label>Подзаголовок</label>
+                    <textarea v-model="form.agents_subtitle" rows="3" class="form-textarea" placeholder="Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс"></textarea>
+                </div>
+
                 <button @click="saveSettings" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Кнопки и ссылки -->
+            <!-- ========== КЕЙСЫ ========== -->
+            <div v-if="activeTab === 'cases'" class="settings-section">
+                <h2>Кейсы</h2>
+                <p class="section-desc">Управление контентом для блока с кейсами на главной странице</p>
+
+                <div class="form-group">
+                    <label>Плашка (pill)</label>
+                    <input type="text" v-model="form.cases_pill" class="form-input" placeholder="Кейсы" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (первая часть)</label>
+                    <input type="text" v-model="form.cases_title" class="form-input" placeholder="Реальные" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (выделенная часть)</label>
+                    <input type="text" v-model="form.cases_title_highlight" class="form-input" placeholder="результаты" />
+                </div>
+
+                <div class="form-group">
+                    <label>Подзаголовок</label>
+                    <textarea v-model="form.cases_subtitle" rows="3" class="form-textarea" placeholder="Как Business Robotics помог бизнесам сократить расходы и увеличить продажи" />
+                </div>
+
+                <div class="form-group">
+                    <label>Кнопка "Смотреть ещё"</label>
+                    <input type="text" v-model="form.cases_more_button" class="form-input" placeholder="Смотреть ещё кейсы" />
+                </div>
+
+                <div class="form-group">
+                    <label>Кнопка "Скрыть"</label>
+                    <input type="text" v-model="form.cases_hide_button" class="form-input" placeholder="Скрыть кейсы" />
+                </div>
+
+                <button @click="saveSettings" class="btn-save">Сохранить</button>
+            </div>
+
+            <!-- ========== PROCESS ========== -->
+            <div v-if="activeTab === 'process'" class="settings-section">
+                <h2>Process (Процесс)</h2>
+                <p class="section-desc">Управление контентом для блока с процессом на главной странице</p>
+
+                <div class="form-group">
+                    <label>Плашка (pill)</label>
+                    <input type="text" v-model="form.process_pill" class="form-input" placeholder="Процесс" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (первая часть)</label>
+                    <input type="text" v-model="form.process_title" class="form-input" placeholder="Запуск за" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (выделенная часть)</label>
+                    <input type="text" v-model="form.process_title_highlight" class="form-input" placeholder="14 дней" />
+                </div>
+
+                <div class="form-group">
+                    <label>Подзаголовок</label>
+                    <textarea v-model="form.process_subtitle" rows="3" class="form-textarea" placeholder="От консультации до полноценной работы агента — без сложностей" />
+                </div>
+
+                <button @click="saveSettings" class="btn-save">Сохранить</button>
+            </div>
+
+            <!-- ========== БЛОГ ========== -->
+            <div v-if="activeTab === 'blog'" class="settings-section">
+                <h2>Блог</h2>
+                <p class="section-desc">Управление контентом для блога на главной странице</p>
+
+                <div class="form-group">
+                    <label>Плашка (pill)</label>
+                    <input type="text" v-model="form.blog_pill" class="form-input" placeholder="Блог" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (первая часть)</label>
+                    <input type="text" v-model="form.blog_title" class="form-input" placeholder="Мир" />
+                </div>
+
+                <div class="form-group">
+                    <label>Заголовок (выделенная часть)</label>
+                    <input type="text" v-model="form.blog_title_highlight" class="form-input" placeholder="роботов" />
+                </div>
+
+                <div class="form-group">
+                    <label>Подзаголовок</label>
+                    <textarea v-model="form.blog_subtitle" rows="3" class="form-textarea" placeholder="Последние разработки в сфере роботехники и AI — только важное" />
+                </div>
+
+                <div class="form-group">
+                    <label>Кнопка "Читать ещё"</label>
+                    <input type="text" v-model="form.blog_more_button" class="form-input" placeholder="Читать ещё статьи" />
+                </div>
+
+                <div class="form-group">
+                    <label>Кнопка "Скрыть"</label>
+                    <input type="text" v-model="form.blog_hide_button" class="form-input" placeholder="Скрыть статьи" />
+                </div>
+
+                <button @click="saveSettings" class="btn-save">Сохранить</button>
+            </div>
+
+            <!-- ========== КНОПКИ И ССЫЛКИ ========== -->
             <div v-if="activeTab === 'buttons'" class="settings-section">
                 <h2>Кнопки и ссылки</h2>
                 <p class="section-desc">Управление текстами и ссылками для кнопок по всему сайту</p>
@@ -60,11 +178,22 @@
                 <h3>Кнопка "Попробовать" (навбар)</h3>
                 <div class="form-row-2">
                     <div class="form-group"><label>Текст кнопки</label><input type="text" v-model="form.btn_try_text" class="form-input" placeholder="Попробовать" /></div>
-                    <div class="form-group"><label>Действие</label>
-                        <select v-model="form.btn_try_action" class="form-input">
-                            <option value="modal">Открыть форму</option>
-                            <option value="url">Перейти по ссылке</option>
-                        </select>
+                    <div class="form-group">
+                        <label>Действие</label>
+                        <div class="br-filter-status-wrap" ref="filterTryActionRef">
+                            <div class="br-searchable-select" @click="toggleTryActionDropdown">
+                                <span class="br-searchable-value">{{ getTryActionLabel(form.btn_try_action) }}</span>
+                                <svg class="br-select-arrow" :class="{ open: filterTryActionOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                            <div v-if="filterTryActionOpen" class="br-dropdown-panel">
+                                <div class="br-dropdown-options">
+                                    <div class="br-dropdown-option" :class="{ selected: form.btn_try_action === 'modal' }" @click="selectTryAction('modal')">Открыть форму</div>
+                                    <div class="br-dropdown-option" :class="{ selected: form.btn_try_action === 'url' }" @click="selectTryAction('url')">Перейти по ссылке</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div v-if="form.btn_try_action === 'url'" class="form-group">
@@ -88,20 +217,12 @@
                     <div class="form-group"><label>Email (ссылка mailto:)</label><input type="email" v-model="form.contact_email_link" class="form-input" placeholder="hello@site.ru" /></div>
                 </div>
 
-                <h3>Ссылки в футере (контакты)</h3>
-                <div class="form-row-2">
-                    <div class="form-group"><label>Телефон в футере</label><input type="text" v-model="form.footer_phone" class="form-input" /></div>
-                    <div class="form-group"><label>Email в футере</label><input type="email" v-model="form.footer_email" class="form-input" /></div>
-                </div>
-                <div class="form-group"><label>Telegram в футере (ссылка)</label><input type="url" v-model="form.footer_telegram" class="form-input" placeholder="https://t.me/..." /></div>
-                <div class="form-group"><label>Telegram в футере (отображаемый текст)</label><input type="text" v-model="form.footer_telegram_text" class="form-input" placeholder="@bizroboticsbot" /></div>
-
                 <button @click="saveButtons" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Partners Settings -->
+            <!-- ========== ПАРТНЁРЫ ========== -->
             <div v-if="activeTab === 'partners'" class="settings-section">
-                <h2>Партнёрский раздел</h2>
+                <h2>Партнёры</h2>
                 <div class="form-group"><label>Плашка (pill)</label><input type="text" v-model="form.partners_pill" class="form-input" /></div>
                 <div class="form-group"><label>Заголовок</label><input type="text" v-model="form.partners_title" class="form-input" /></div>
                 <div class="form-group"><label>Подзаголовок</label><textarea v-model="form.partners_subtitle" rows="3" class="form-textarea"></textarea></div>
@@ -160,7 +281,7 @@
                 <button @click="savePartners" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- CTA Settings -->
+            <!-- ========== CTA БЛОК ========== -->
             <div v-if="activeTab === 'cta'" class="settings-section">
                 <h2>CTA блок</h2>
                 <div class="form-group"><label>Плашка</label><input type="text" v-model="form.cta_pill" class="form-input" /></div>
@@ -172,7 +293,7 @@
                 <button @click="saveSettings" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Contact Form Settings -->
+            <!-- ========== ФОРМА ЗАЯВКИ ========== -->
             <div v-if="activeTab === 'contact_form'" class="settings-section">
                 <h2>Форма заявки</h2>
                 <div class="form-group"><label>Плашка</label><input type="text" v-model="form.contact_form_pill" class="form-input" /></div>
@@ -188,9 +309,9 @@
                 <button @click="saveSettings" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Соцсети и иконки -->
+            <!-- ========== СОЦСЕТИ ========== -->
             <div v-if="activeTab === 'contacts'" class="settings-section">
-                <h2>Соцсети и иконки футера</h2>
+                <h2>Соцсети</h2>
                 <p class="section-desc">Добавляйте любые соцсети. Можно выбрать встроенную иконку или загрузить свою (SVG, PNG).</p>
 
                 <div v-for="(social, index) in socials" :key="index" class="social-card">
@@ -213,7 +334,7 @@
                     <div class="form-group">
                         <label>Тип иконки</label>
                         <div class="icon-type-switcher">
-                            <button :class="{ active: social.icon_type !== 'custom' }" @click="social.icon_type = 'builtin'" type="button">Встроенная иконка</button>
+                            <button :class="{ active: social.icon_type !== 'custom' }" @click="social.icon_type = 'builtin'; social.icon = 'telegram'" type="button">Встроенная иконка</button>
                             <button :class="{ active: social.icon_type === 'custom' }" @click="social.icon_type = 'custom'" type="button">Загрузить свою</button>
                         </div>
                     </div>
@@ -246,7 +367,7 @@
                 <button @click="saveSocials" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Footer Settings -->
+            <!-- ========== ФУТЕР ========== -->
             <div v-if="activeTab === 'footer'" class="settings-section">
                 <h2>Футер</h2>
                 <div class="form-group"><label>Название бренда</label><input type="text" v-model="form.footer_brand_name" class="form-input" /></div>
@@ -257,12 +378,12 @@
                 <div class="form-group"><label>Телефон</label><input type="text" v-model="form.footer_phone" class="form-input" /></div>
                 <div class="form-group"><label>Email</label><input type="email" v-model="form.footer_email" class="form-input" /></div>
                 <div class="form-group"><label>Telegram (ссылка)</label><input type="url" v-model="form.footer_telegram" class="form-input" /></div>
-                <div class="form-group"><label>Telegram (текст в футере)</label><input type="text" v-model="form.footer_telegram_text" class="form-input" placeholder="@bizroboticsbot" /></div>
+                <div class="form-group"><label>Telegram (текст)</label><input type="text" v-model="form.footer_telegram_text" class="form-input" placeholder="@bizroboticsbot" /></div>
                 <div class="form-group"><label>Копирайт</label><input type="text" v-model="form.footer_copyright" class="form-input" /></div>
                 <button @click="saveSettings" class="btn-save">Сохранить</button>
             </div>
 
-            <!-- Marquee Settings -->
+            <!-- ========== БЕГУЩАЯ СТРОКА ========== -->
             <div v-if="activeTab === 'marquee'" class="settings-section">
                 <h2>Бегущая строка</h2>
                 <div class="form-group">
@@ -395,7 +516,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
 import { settingsAPI } from '../../services/api';
 
 const activeTab = ref('hero');
@@ -404,9 +525,12 @@ const loading = ref(true);
 
 const tabs = [
     { id: 'hero', name: 'Главный экран' },
-    { id: 'sections', name: 'Заголовки секций' },
+    { id: 'agents', name: 'AI-Агенты' },
+    { id: 'cases', name: 'Кейсы' },
+    { id: 'process', name: 'Process' },
+    { id: 'blog', name: 'Блог' },
     { id: 'buttons', name: 'Кнопки и ссылки' },
-    { id: 'partners', name: 'Партнёрам' },
+    { id: 'partners', name: 'Партнёры' },
     { id: 'cta', name: 'CTA блок' },
     { id: 'contact_form', name: 'Форма заявки' },
     { id: 'contacts', name: 'Соцсети' },
@@ -426,14 +550,53 @@ const builtinIcons = [
     { value: 'linkedin', label: 'LinkedIn', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065z"/></svg>' },
 ];
 
+const filterTryActionRef = ref(null);
+const filterTryActionOpen = ref(false);
+
+const getTryActionLabel = (value) => {
+    if (value === 'url') return 'Перейти по ссылке';
+    return 'Открыть форму';
+};
+
+const toggleTryActionDropdown = () => {
+    filterTryActionOpen.value = !filterTryActionOpen.value;
+};
+
+const selectTryAction = (value) => {
+    form.btn_try_action = value;
+    filterTryActionOpen.value = false;
+};
+
+const handleClickOutside = (e) => {
+    if (filterTryActionRef.value && !filterTryActionRef.value.contains(e.target)) {
+        filterTryActionOpen.value = false;
+    }
+};
+
 const form = reactive({
     hero_title_line_1: '', hero_title_line_2: '', hero_title_line_3: '',
     hero_top_text: '', hero_eyebrow: '', hero_button_text: '', hero_use_spline: true,
     hero_background: null, hero_media: null,
-    agents_title: '', agents_subtitle: '',
-    cases_title: '', cases_subtitle: '',
-    process_title: '', process_subtitle: '',
-    blog_title: '', blog_subtitle: '',
+    agents_pill: 'Продукты',
+    agents_title: 'AI-агенты',
+    agents_title_suffix: 'для каждой задачи',
+    agents_subtitle: 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс',
+    cases_pill: 'Кейсы',
+    cases_title: 'Реальные',
+    cases_title_highlight: 'результаты',
+    cases_subtitle: 'Как Business Robotics помог бизнесам сократить расходы и увеличить продажи',
+    cases_more_button: 'Смотреть ещё кейсы',
+    cases_hide_button: 'Скрыть кейсы',
+    process_pill: 'Процесс',
+    process_title: 'Запуск за',
+    process_title_highlight: '14 дней',
+    process_subtitle: 'От консультации до полноценной работы агента — без сложностей',
+    blog_pill: 'Блог',
+    blog_title: 'Мир',
+    blog_title_highlight: 'роботов',
+    blog_subtitle: 'Последние разработки в сфере роботехники и AI — только важное',
+    blog_more_button: 'Читать ещё статьи',
+    blog_hide_button: 'Скрыть статьи',
     btn_try_text: 'Попробовать', btn_try_action: 'modal', btn_try_url: '',
     btn_telegram_url: '',
     contact_phone: '', contact_phone_link: '',
@@ -621,7 +784,6 @@ const saveSchedule = async () => {
     }
 };
 
-// Остальные функции (socials, partners и т.д.)
 const socials = ref([]);
 const backgroundFile = ref(null);
 const mediaFile = ref(null);
@@ -721,8 +883,9 @@ const saveSettings = async () => {
         await settingsAPI.updateSettings(form);
         alert('Настройки сохранены');
         await loadSettings();
-    } catch {
-        alert('Ошибка');
+    } catch (error) {
+        console.error('Ошибка сохранения:', error);
+        alert('Ошибка при сохранении');
     } finally {
         saving.value = false;
     }
@@ -803,20 +966,32 @@ const loadSettings = async () => {
             form.hero_background = data.hero.hero_background || null;
         }
         if (data.agents) {
-            form.agents_title = data.agents.agents_title || '';
-            form.agents_subtitle = data.agents.agents_subtitle || '';
+            form.agents_pill = data.agents.agents_pill || 'Продукты';
+            form.agents_title = data.agents.agents_title || 'AI-агенты';
+            form.agents_title_suffix = data.agents.agents_title_suffix || 'для каждой задачи';
+            form.agents_subtitle = data.agents.agents_subtitle || 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс';
         }
         if (data.cases) {
-            form.cases_title = data.cases.cases_title || '';
-            form.cases_subtitle = data.cases.cases_subtitle || '';
+            form.cases_pill = data.cases.cases_pill || 'Кейсы';
+            form.cases_title = data.cases.cases_title || 'Реальные';
+            form.cases_title_highlight = data.cases.cases_title_highlight || 'результаты';
+            form.cases_subtitle = data.cases.cases_subtitle || 'Как Business Robotics помог бизнесам сократить расходы и увеличить продажи';
+            form.cases_more_button = data.cases.cases_more_button || 'Смотреть ещё кейсы';
+            form.cases_hide_button = data.cases.cases_hide_button || 'Скрыть кейсы';
         }
         if (data.process) {
-            form.process_title = data.process.process_title || '';
-            form.process_subtitle = data.process.process_subtitle || '';
+            form.process_pill = data.process.process_pill || 'Процесс';
+            form.process_title = data.process.process_title || 'Запуск за';
+            form.process_title_highlight = data.process.process_title_highlight || '14 дней';
+            form.process_subtitle = data.process.process_subtitle || 'От консультации до полноценной работы агента — без сложностей';
         }
         if (data.blog) {
-            form.blog_title = data.blog.blog_title || '';
-            form.blog_subtitle = data.blog.blog_subtitle || '';
+            form.blog_pill = data.blog.blog_pill || 'Блог';
+            form.blog_title = data.blog.blog_title || 'Мир';
+            form.blog_title_highlight = data.blog.blog_title_highlight || 'роботов';
+            form.blog_subtitle = data.blog.blog_subtitle || 'Последние разработки в сфере роботехники и AI — только важное';
+            form.blog_more_button = data.blog.blog_more_button || 'Читать ещё статьи';
+            form.blog_hide_button = data.blog.blog_hide_button || 'Скрыть статьи';
         }
         if (data.general) {
             form.btn_try_text = data.general.btn_try_text || 'Попробовать';
@@ -888,13 +1063,16 @@ onMounted(() => {
     loadCategories();
     loadGenSettings();
     loadRecentArticles();
+    document.addEventListener('mousedown', handleClickOutside);
 });
 
 onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
 <style scoped>
+/* Все стили остаются без изменений */
 .settings-panel { padding: 24px; background: #0D1E30; min-height: 100vh; }
 .settings-header h1 { color: #E8F0F8; margin-bottom: 24px; font-size: 24px; }
 .settings-tabs { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; border-bottom: 1px solid rgba(0,180,230,0.2); padding-bottom: 16px; }
@@ -914,6 +1092,21 @@ onUnmounted(() => {
 .form-input:focus, .form-textarea:focus { outline: none; border-color: #00CFFF; box-shadow: 0 0 0 3px rgba(0,207,255,0.1); }
 .form-textarea { resize: vertical; }
 .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #E8F0F8; font-size: 14px; }
+
+.br-filter-status-wrap { position: relative; width: 100%; }
+.br-searchable-select { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; gap: 8px; padding: 12px 14px; background: #283D55; border: 1px solid rgba(0,180,230,0.22); border-radius: 12px; font-size: 14px; color: #E8F0F8; transition: all 0.2s; box-sizing: border-box; width: 100%; }
+.br-searchable-select:hover { border-color: rgba(0,207,255,0.45); }
+.br-searchable-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.br-select-arrow { flex-shrink: 0; stroke: #5A7A95; transition: transform 0.2s; }
+.br-select-arrow.open { transform: rotate(180deg); }
+.br-dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #1A2D42; border: 1px solid rgba(0,207,255,0.3); border-radius: 12px; z-index: 99999 !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6); overflow: hidden; min-width: 200px; }
+.br-dropdown-options { max-height: 220px; overflow-y: auto; padding: 4px; }
+.br-dropdown-options::-webkit-scrollbar { width: 4px; }
+.br-dropdown-options::-webkit-scrollbar-track { background: transparent; }
+.br-dropdown-options::-webkit-scrollbar-thumb { background: rgba(0,180,230,0.3); border-radius: 4px; }
+.br-dropdown-option { padding: 9px 12px; font-size: 13px; color: #C0D8EE; border-radius: 8px; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 6px; }
+.br-dropdown-option:hover { background: rgba(0,207,255,0.1); color: #E8F0F8; }
+.br-dropdown-option.selected { background: rgba(0,207,255,0.15); color: #00CFFF; }
 
 .preview { margin-top: 12px; }
 .preview img { max-width: 200px; border-radius: 12px; }

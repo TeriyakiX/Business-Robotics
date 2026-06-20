@@ -10,19 +10,46 @@
                     </svg>
                     <input type="text" v-model="filters.search" placeholder="Поиск по имени или телефону..." @input="debouncedFetch"/>
                 </div>
-                <div class="br-admin-filter-group">
+
+                <!-- КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ -->
+                <div class="br-admin-filter-group br-filter-status-wrap" ref="filterStatusRef">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
                     </svg>
-                    <select v-model="filters.status" @change="fetchItems">
-                        <option value="">Все статусы</option>
-                        <option value="new">Новые</option>
-                        <option value="processed">В обработке</option>
-                        <option value="contacted">Связались</option>
-                        <option value="rejected">Отклонена</option>
-                    </select>
+                    <div class="br-searchable-select" @click="toggleFilterStatusDropdown">
+                        <span class="br-searchable-value">
+                            {{ getStatusLabel(filters.status) }}
+                        </span>
+                        <svg class="br-select-arrow" :class="{ open: filterStatusOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div v-if="filterStatusOpen" class="br-dropdown-panel">
+                        <div class="br-dropdown-options">
+                            <div class="br-dropdown-option" :class="{ selected: filters.status === '' }" @click="selectFilterStatus('')">
+                                <span class="br-status-dot br-status-dot-all"></span>
+                                Все статусы
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.status === 'new' }" @click="selectFilterStatus('new')">
+                                <span class="br-status-dot br-status-dot-new"></span>
+                                Новые
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.status === 'processed' }" @click="selectFilterStatus('processed')">
+                                <span class="br-status-dot br-status-dot-processed"></span>
+                                В обработке
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.status === 'contacted' }" @click="selectFilterStatus('contacted')">
+                                <span class="br-status-dot br-status-dot-contacted"></span>
+                                Связались
+                            </div>
+                            <div class="br-dropdown-option" :class="{ selected: filters.status === 'rejected' }" @click="selectFilterStatus('rejected')">
+                                <span class="br-status-dot br-status-dot-rejected"></span>
+                                Отклонена
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,12 +168,13 @@
                 <form @submit.prevent="submitStatus" class="br-admin-modal-form">
                     <div class="br-admin-form-group">
                         <label>Статус</label>
-                        <select v-model="statusForm.status">
-                            <option value="new">Новая</option>
-                            <option value="processed">В обработке</option>
-                            <option value="contacted">Связались</option>
-                            <option value="rejected">Отклонена</option>
-                        </select>
+                        <div class="br-admin-status-options">
+                            <label class="br-admin-radio" v-for="(label, key) in statusLabels" :key="key">
+                                <input type="radio" :value="key" v-model="statusForm.status"/>
+                                <span class="br-radio-dot" :class="'br-radio-dot-' + key"></span>
+                                {{ label }}
+                            </label>
+                        </div>
                     </div>
 
                     <div class="br-admin-form-group">
@@ -167,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { contactsAPI } from '../../services/api';
 
@@ -183,19 +211,20 @@ const filters = reactive({
     status: ''
 });
 
-const statusForm = reactive({
-    status: '',
-    notes: ''
-});
+// ===== КАСТОМНЫЙ СЕЛЕКТ ДЛЯ СТАТУСОВ =====
+const filterStatusRef = ref(null);
+const filterStatusOpen = ref(false);
+
+const statusLabels = {
+    new: 'Новая',
+    processed: 'В обработке',
+    contacted: 'Связались',
+    rejected: 'Отклонена'
+};
 
 const getStatusLabel = (status) => {
-    const labels = {
-        new: 'Новая',
-        processed: 'В обработке',
-        contacted: 'Связались',
-        rejected: 'Отклонена'
-    };
-    return labels[status] || status;
+    if (!status) return 'Все статусы';
+    return statusLabels[status] || status;
 };
 
 const getStatusClass = (status) => {
@@ -207,6 +236,27 @@ const getStatusClass = (status) => {
     };
     return classes[status] || '';
 };
+
+const toggleFilterStatusDropdown = () => {
+    filterStatusOpen.value = !filterStatusOpen.value;
+};
+
+const selectFilterStatus = (value) => {
+    filters.status = value;
+    filterStatusOpen.value = false;
+    fetchItems();
+};
+
+const handleClickOutside = (e) => {
+    if (filterStatusRef.value && !filterStatusRef.value.contains(e.target)) {
+        filterStatusOpen.value = false;
+    }
+};
+
+const statusForm = reactive({
+    status: '',
+    notes: ''
+});
 
 const formatDate = (date) => {
     if (!date) return '';
@@ -302,6 +352,11 @@ onMounted(() => {
         return;
     }
     fetchItems();
+    document.addEventListener('mousedown', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 </script>
 
@@ -325,6 +380,8 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 16px;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 100;
 }
 
 .br-admin-filters {
@@ -341,15 +398,42 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 180, 230, 0.15);
     border-radius: 12px;
+    position: relative;
+    z-index: 101;
 }
 
-.br-admin-filter-group svg {
+.br-filter-status-wrap {
+    padding: 0;
+    overflow: visible;
+    z-index: 102;
+}
+
+.br-filter-status-wrap > svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    stroke: #5A7A95;
+    flex-shrink: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.br-filter-status-wrap .br-searchable-select {
+    padding-left: 40px;
+    padding-right: 32px;
+    min-width: 160px;
+    height: 42px;
+    border: none;
+    background: transparent;
+}
+
+.br-admin-filter-group svg:not(.br-select-arrow) {
     stroke: #5A7A95;
     flex-shrink: 0;
 }
 
-.br-admin-filter-group input,
-.br-admin-filter-group select {
+.br-admin-filter-group input {
     border: none;
     font-size: 14px;
     background: transparent;
@@ -362,8 +446,129 @@ onMounted(() => {
     color: #5A7A95;
 }
 
-.br-admin-filter-group select option {
-    background: #213349;
+/* ===== SEARCHABLE SELECT ===== */
+.br-searchable-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+    padding: 11px 14px;
+    background: #283D55;
+    border: 1px solid rgba(0, 180, 230, 0.22);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #E8F0F8;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.br-searchable-select:hover {
+    border-color: rgba(0, 207, 255, 0.45);
+}
+
+.br-searchable-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.br-select-arrow {
+    flex-shrink: 0;
+    stroke: #5A7A95;
+    transition: transform 0.2s;
+}
+
+.br-select-arrow.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel - FIXED Z-INDEX */
+.br-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #1A2D42;
+    border: 1px solid rgba(0, 207, 255, 0.3);
+    border-radius: 12px;
+    z-index: 99999 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.br-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.br-dropdown-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.br-dropdown-options::-webkit-scrollbar-thumb {
+    background: rgba(0, 180, 230, 0.3);
+    border-radius: 4px;
+}
+
+.br-dropdown-option {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #C0D8EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.br-dropdown-option:hover {
+    background: rgba(0, 207, 255, 0.1);
+    color: #E8F0F8;
+}
+
+.br-dropdown-option.selected {
+    background: rgba(0, 207, 255, 0.15);
+    color: #00CFFF;
+}
+
+/* Статусные точки в селекте */
+.br-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.br-status-dot-all {
+    background: #5A7A95;
+}
+
+.br-status-dot-new {
+    background: #00CFFF;
+}
+
+.br-status-dot-processed {
+    background: #A78BFA;
+}
+
+.br-status-dot-contacted {
+    background: #34D399;
+}
+
+.br-status-dot-rejected {
+    background: #ef4444;
 }
 
 /* Loading */
@@ -419,6 +624,8 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 24px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Card */
@@ -429,6 +636,8 @@ onMounted(() => {
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid rgba(0, 180, 230, 0.12);
+    position: relative;
+    z-index: 1;
 }
 
 .br-admin-item-card:hover {
@@ -596,10 +805,18 @@ onMounted(() => {
     border: 1px solid rgba(0, 207, 255, 0.3);
 }
 
+.status-new .br-admin-status-dot {
+    background: #00CFFF;
+}
+
 .status-processed {
     background: rgba(167, 139, 250, 0.15);
     color: #A78BFA;
     border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.status-processed .br-admin-status-dot {
+    background: #A78BFA;
 }
 
 .status-contacted {
@@ -608,10 +825,18 @@ onMounted(() => {
     border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
+.status-contacted .br-admin-status-dot {
+    background: #34D399;
+}
+
 .status-rejected {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-rejected .br-admin-status-dot {
+    background: #ef4444;
 }
 
 /* Modal */
@@ -623,7 +848,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .br-admin-modal-container {
@@ -721,6 +946,60 @@ onMounted(() => {
     background: #213349;
 }
 
+/* Status options in modal */
+.br-admin-status-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.br-admin-radio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #E8F0F8;
+    font-size: 14px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.br-admin-radio:hover {
+    background: rgba(0, 207, 255, 0.05);
+}
+
+.br-admin-radio input {
+    width: auto;
+    margin: 0;
+}
+
+.br-radio-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.br-radio-dot-new {
+    background: #00CFFF;
+}
+
+.br-radio-dot-processed {
+    background: #A78BFA;
+}
+
+.br-radio-dot-contacted {
+    background: #34D399;
+}
+
+.br-radio-dot-rejected {
+    background: #ef4444;
+}
+
 .br-admin-modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -773,19 +1052,26 @@ onMounted(() => {
     .br-admin-filters-bar {
         flex-direction: column;
         align-items: stretch;
+        padding: 16px 18px;
     }
 
     .br-admin-filters {
         flex-direction: column;
+        width: 100%;
     }
 
     .br-admin-filter-group {
         width: 100%;
+        box-sizing: border-box;
     }
 
-    .br-admin-filter-group input,
-    .br-admin-filter-group select {
+    .br-admin-filter-group input {
         min-width: auto;
+        width: 100%;
+    }
+
+    .br-filter-status-wrap .br-searchable-select {
+        min-width: 0;
         width: 100%;
     }
 
@@ -796,6 +1082,64 @@ onMounted(() => {
     .br-admin-contact-details {
         flex-direction: column;
         gap: 6px;
+    }
+
+    .br-admin-modal-container {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+
+    .br-admin-modal-header {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-header h2 {
+        font-size: 18px;
+    }
+
+    .br-admin-modal-form {
+        padding: 18px 20px;
+    }
+
+    .br-admin-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .br-admin-btn-cancel,
+    .br-admin-btn-save {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .br-dropdown-panel {
+        position: fixed;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        top: auto !important;
+        bottom: 12px;
+        max-height: 60vh;
+        z-index: 99999 !important;
+    }
+
+    .br-dropdown-options {
+        max-height: 45vh;
+    }
+}
+
+@media (max-width: 400px) {
+    .br-admin-card-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .br-admin-card-actions {
+        flex-direction: column;
+    }
+
+    .br-admin-card-actions button {
+        width: 100%;
     }
 }
 </style>

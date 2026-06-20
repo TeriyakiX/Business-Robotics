@@ -7,7 +7,8 @@
                     {{ casesData.cases_pill || 'Кейсы' }}
                 </div>
                 <h2 class="section-h" style="color: #0C1B2E;">
-                    {{ casesData.cases_title || 'Реальные' }} <span class="glow-text">{{ casesData.cases_title_highlight || 'результаты' }}</span>
+                    {{ casesData.cases_title || 'Реальные' }}
+                    <span class="glow-text">{{ casesData.cases_title_highlight || 'результаты' }}</span>
                 </h2>
                 <p class="section-sub" style="color: #4E6E88;">{{ casesData.cases_subtitle || 'Как Business Robotics помог бизнесам сократить расходы и увеличить продажи' }}</p>
             </div>
@@ -75,8 +76,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useSettingsStore } from '@/stores/settingsStore';
+import { ref, computed, onMounted } from 'vue';
+import { settingsAPI } from '@/services/api';
 
 const props = defineProps({
     cases: {
@@ -85,8 +86,35 @@ const props = defineProps({
     }
 });
 
-const settingsStore = useSettingsStore();
-const casesData = computed(() => settingsStore.cases || {});
+const settingsData = ref({});
+const loading = ref(true);
+
+const loadSettings = async () => {
+    try {
+        loading.value = true;
+        const response = await settingsAPI.getAll();
+        const data = response.data || {};
+        settingsData.value = data;
+    } catch (error) {
+        console.error('Ошибка загрузки настроек:', error);
+        settingsData.value = {};
+    } finally {
+        loading.value = false;
+    }
+};
+
+const casesData = computed(() => {
+    const cases = settingsData.value.cases || {};
+
+    return {
+        cases_pill: cases.cases_pill || 'Кейсы',
+        cases_title: cases.cases_title || 'Реальные',
+        cases_title_highlight: cases.cases_title_highlight || 'результаты',
+        cases_subtitle: cases.cases_subtitle || 'Как Business Robotics помог бизнесам сократить расходы и увеличить продажи',
+        cases_hide_button: cases.cases_hide_button || 'Скрыть кейсы',
+        cases_more_button: cases.cases_more_button || 'Смотреть ещё кейсы'
+    };
+});
 
 const showAll = ref(false);
 
@@ -108,10 +136,13 @@ const getAvatarGradient = (id) => {
     ];
     return gradients[id % gradients.length];
 };
+
+onMounted(() => {
+    loadSettings();
+});
 </script>
 
 <style scoped>
-/* ========== CASES SECTION STYLES ========== */
 .cases-section {
     padding: 120px 0;
     background: linear-gradient(160deg, #EDF3FA 0%, #E4EEF8 50%, #EDF3FA 100%);
@@ -127,7 +158,6 @@ const getAvatarGradient = (id) => {
     z-index: 10;
 }
 
-/* Section Head */
 .section-head {
     text-align: center;
     margin-bottom: 60px;
@@ -196,14 +226,12 @@ const getAvatarGradient = (id) => {
     color: #4E6E88;
 }
 
-/* Cases Grid */
 .cases-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 
-/* Case Card */
 .case-card {
     background: white;
     border: 1px solid rgba(0, 80, 180, 0.12);
@@ -253,7 +281,6 @@ const getAvatarGradient = (id) => {
     border-color: rgba(0, 207, 255, 0.6);
 }
 
-/* Case Header */
 .case-header {
     display: flex;
     align-items: center;
@@ -279,7 +306,6 @@ const getAvatarGradient = (id) => {
     color: #0C1B2E;
 }
 
-/* Case Metrics */
 .case-metrics {
     display: flex;
     gap: 10px;
@@ -307,7 +333,6 @@ const getAvatarGradient = (id) => {
     margin-top: 4px;
 }
 
-/* Case Body */
 .case-body {
     font-size: 14px;
     line-height: 1.7;
@@ -315,7 +340,6 @@ const getAvatarGradient = (id) => {
     margin-bottom: 20px;
 }
 
-/* Case Footer */
 .case-footer {
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     padding-top: 16px;
@@ -352,7 +376,6 @@ const getAvatarGradient = (id) => {
     color: #7A9AB5;
 }
 
-/* Cases More Button */
 .cases-more {
     text-align: center;
     margin-top: 36px;
@@ -385,7 +408,6 @@ const getAvatarGradient = (id) => {
     transform: rotate(180deg);
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
     .cases-grid {
         grid-template-columns: repeat(2, 1fr);

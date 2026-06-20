@@ -50,18 +50,48 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useSettingsStore } from '@/stores/settingsStore';
+import { ref, computed, onMounted } from 'vue';
+import { settingsAPI } from '@/services/api';
 
-defineProps({
+const props = defineProps({
     agents: {
         type: Array,
         default: () => []
     }
 });
 
-const settingsStore = useSettingsStore();
-const agentsData = computed(() => settingsStore.agents || {});
+const settingsData = ref({});
+const loading = ref(true);
+
+const loadSettings = async () => {
+    try {
+        loading.value = true;
+        const response = await settingsAPI.getAll();
+        const data = response.data || {};
+        settingsData.value = data;
+        console.log('✅ Agents settings loaded:', data.agents);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки настроек:', error);
+        settingsData.value = {};
+    } finally {
+        loading.value = false;
+    }
+};
+
+const agentsData = computed(() => {
+    const agents = settingsData.value.agents || {};
+
+    return {
+        agents_pill: agents.agents_pill || 'Продукты',
+        agents_title: agents.agents_title || 'AI-агенты',
+        agents_title_suffix: agents.agents_title_suffix || 'для каждой задачи',
+        agents_subtitle: agents.agents_subtitle || 'Каждый агент — специализированный алгоритм, обученный под конкретный бизнес-процесс'
+    };
+});
+
+onMounted(() => {
+    loadSettings();
+});
 </script>
 
 <style scoped>
