@@ -14,6 +14,8 @@ use App\Repositories\ContactRepository;
 use App\Validators\ContactValidator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final readonly class ContactService
 {
@@ -46,9 +48,13 @@ final readonly class ContactService
         $this->validator->validateCreateData($dto->name, $dto->phone);
 
         try {
-            return DB::transaction(function () use ($dto) {
+            $contact = DB::transaction(function () use ($dto) {
                 return $this->repository->create($dto);
             });
+
+            $this->sendToCrmWebhook($dto);
+
+            return $contact;
         } catch (\Exception $e) {
             throw new ContactCreateFailedException();
         }
@@ -104,5 +110,21 @@ final readonly class ContactService
         $contact->markAsRejected($notes);
 
         return $contact->fresh();
+    }
+
+    private function sendToCrmWebhook(ContactCreateDto $dto): void
+    {
+        try {
+            Http::asForm()->post(
+                'https://wdg.biz-crm.ru/inserv/in.php?token=05f9168f9be854e419ba90024771573f',
+                [
+                    'name' => $dto->name,
+                    'phone' => $dto->phone,
+                    'company' => $dto->company,
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error('CRM webhook failed', ['error' => $e->getMessage()]);
+        }
     }
 }
