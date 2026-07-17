@@ -44,7 +44,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response.data,
     (error) => {
-        if (error.response?.status === 401) {
+        const isAdminRequest = error.config?.url?.includes('/admin');
+
+        if (error.response?.status === 401 && isAdminRequest) {
             localStorage.removeItem('admin_token');
             window.location.href = '/admin/login';
         }

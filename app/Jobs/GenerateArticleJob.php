@@ -79,7 +79,7 @@ EOT;
             'x-api-key' => $apiKey,
             'anthropic-version' => '2023-06-01',
             'content-type' => 'application/json',
-        ])->timeout(100)->post('http://72.56.25.171/v1/messages', [
+        ])->timeout(100)->post('http://64.188.58.83/v1/messages', [
             'model' => 'claude-haiku-4-5-20251001',
             'max_tokens' => 8000,
             'system' => $systemPrompt,
