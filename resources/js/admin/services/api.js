@@ -186,6 +186,18 @@ export const settingsAPI = {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
+
+    getSchedule: () => api.get('/admin/articles/schedule'),
+    updateSchedule: (data) => api.put('/admin/articles/schedule', data),
+
+    getGenerationSettings: () => api.get('/admin/articles/generation-settings'),
+    saveGenerationSettings: (data) => api.post('/admin/articles/generation-settings', data),
+
+    getCategories: () => api.get('/admin/categories'),
+
+    getRecentArticles: () => api.get('/admin/articles', {
+        params: { per_page: 5, sort: 'created_at', order: 'desc' },
+    }),
 };
 
 export default api;
