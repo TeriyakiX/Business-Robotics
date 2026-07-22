@@ -777,6 +777,7 @@ const loadGenSettings = async () => {
         genForm.mode = s.mode ?? 'preset';
         genForm.preset = s.preset ?? 'every_monday';
         genForm.cron = s.cron ?? '0 9 * * 1';
+        scheduleLabel.value = s.label ?? '';
         onceFired.value = s.once_fired ?? false;
         if (s.once_at) {
             const dt = new Date(s.once_at);
