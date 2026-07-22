@@ -17,15 +17,18 @@ final class ArticleScheduleController extends Controller
      *  - "once"    — один раз в конкретную дату и время
      *  - "preset"  — один из готовых пресетов (повторяющееся)
      *  - "custom"  — произвольное cron-выражение (повторяющееся)
+     *
      */
     private const PRESETS = [
-        'every_monday'  => ['cron' => '47 10 * * *',    'label' => 'Каждый понедельник в 10:47'],
-        'every_day'     => ['cron' => '0 9 * * *',    'label' => 'Каждый день в 9:00'],
+        'every_monday'  => ['cron' => '0 9 * * 1',    'label' => 'Каждый понедельник в 9:00'],
+        'every_day'     => ['cron' => '0 8 * * *',    'label' => 'Каждый день в 8:00'],
         'twice_a_week'  => ['cron' => '0 9 * * 1,4',  'label' => 'Пн и Чт в 9:00'],
         'every_weekday' => ['cron' => '0 9 * * 1-5',  'label' => 'По будням в 9:00'],
         'twice_a_month' => ['cron' => '0 9 1,15 * *', 'label' => '1-го и 15-го в 9:00'],
         'every_month'   => ['cron' => '0 9 1 * *',    'label' => 'Раз в месяц (1-го) в 9:00'],
     ];
+
+    private const WEEKDAYS_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 
     /**
      * GET /admin/articles/schedule
@@ -45,17 +48,24 @@ final class ArticleScheduleController extends Controller
             ])
             ->pluck('value', 'key');
 
+        $mode   = $settings['article_schedule_mode'] ?? 'preset';
+        $cron   = $settings['article_schedule_cron'] ?? '0 9 * * 1';
+        $onceAt = $settings['article_schedule_once_at'] ?? null;
+
         return response()->json([
             'success'     => true,
             'enabled'     => ($settings['article_schedule_enabled'] ?? '1') === '1',
-            'mode'        => $settings['article_schedule_mode'] ?? 'preset',
+            'mode'        => $mode,
             'preset'      => $settings['article_schedule_preset'] ?? 'every_monday',
-            'cron'        => $settings['article_schedule_cron'] ?? '0 9 * * 1',
-            'once_at'     => $settings['article_schedule_once_at'] ?? null,
+            'cron'        => $cron,
+            'once_at'     => $onceAt,
             'once_fired'  => ($settings['article_schedule_once_fired'] ?? '0') === '1',
             'prompt'      => $settings['article_generation_prompt'] ?? '',
             'category_slug' => $settings['article_generation_category_slug'] ?? 'technology',
             'presets'     => self::PRESETS,
+            'label'       => $mode === 'once'
+                ? $this->buildOnceLabel($onceAt)
+                : $this->buildCronLabel($cron),
         ]);
     }
 
@@ -91,18 +101,18 @@ final class ArticleScheduleController extends Controller
             ],
         ]);
 
-        $mode    = $validated['mode'];
-        $now     = now();
-        $message = '';
+        $mode = $validated['mode'];
+        $now  = now();
 
-        [$cron, $label] = match ($mode) {
+        $cron = match ($mode) {
             'once'   => $this->buildOnceCron($validated['once_at']),
-            'preset' => [
-                self::PRESETS[$validated['preset']]['cron'],
-                self::PRESETS[$validated['preset']]['label'],
-            ],
-            'custom' => [$validated['cron'], 'Своё расписание: ' . $validated['cron']],
+            'preset' => self::PRESETS[$validated['preset']]['cron'],
+            'custom' => $validated['cron'],
         };
+
+        $label = $mode === 'once'
+            ? $this->buildOnceLabel($validated['once_at'])
+            : $this->buildCronLabel($cron);
 
         $rows = [
             'article_schedule_enabled'    => $validated['enabled'] ? '1' : '0',
@@ -114,12 +124,8 @@ final class ArticleScheduleController extends Controller
         if ($mode === 'once') {
             $rows['article_schedule_once_at']     = $validated['once_at'];
             $rows['article_schedule_once_fired']  = '0';
-            $message = "Статья будет сгенерирована один раз: {$label}";
         } elseif ($mode === 'preset') {
             $rows['article_schedule_preset'] = $validated['preset'];
-            $message = "Расписание: {$label}";
-        } else {
-            $message = "Расписание (cron): {$cron}";
         }
 
         foreach ($rows as $key => $value) {
@@ -131,7 +137,7 @@ final class ArticleScheduleController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $message,
+            'message' => "Расписание сохранено: {$label}",
             'mode'    => $mode,
             'cron'    => $cron,
             'label'   => $label,
@@ -183,15 +189,67 @@ final class ArticleScheduleController extends Controller
 
     /**
      * Строит cron-выражение из ISO даты для разового запуска.
-     *
-     * @return array{string, string}
      */
-    private function buildOnceCron(string $isoDatetime): array
+    private function buildOnceCron(string $isoDatetime): string
     {
-        $dt    = \Carbon\Carbon::parse($isoDatetime);
-        $cron  = sprintf('%d %d %d %d *', $dt->minute, $dt->hour, $dt->day, $dt->month);
-        $label = $dt->format('d.m.Y в H:i');
+        $dt = \Carbon\Carbon::parse($isoDatetime);
+        return sprintf('%d %d %d %d *', $dt->minute, $dt->hour, $dt->day, $dt->month);
+    }
 
-        return [$cron, $label];
+    private function buildOnceLabel(?string $onceAt): string
+    {
+        if (!$onceAt) return 'Дата не задана';
+        $dt = \Carbon\Carbon::parse($onceAt);
+        return 'Один раз: ' . $dt->format('d.m.Y в H:i');
+    }
+
+    private function buildCronLabel(string $cron): string
+    {
+        $parts = preg_split('/\s+/', trim($cron));
+        if (count($parts) !== 5) {
+            return "cron: {$cron}";
+        }
+
+        [$min, $hour, $day, $month, $dow] = $parts;
+
+        $hasFixedTime = ctype_digit($min) && ctype_digit($hour);
+        if (!$hasFixedTime) {
+            return "cron: {$cron}";
+        }
+
+        $time = sprintf('%02d:%02d', (int)$hour, (int)$min);
+
+        $dayIsAny   = $day === '*';
+        $monthIsAny = $month === '*';
+        $dowIsAny   = $dow === '*';
+
+        if ($dayIsAny && $monthIsAny && $dowIsAny) {
+            return "Каждый день в {$time}";
+        }
+
+        if ($dayIsAny && $monthIsAny && !$dowIsAny) {
+            $days = [];
+            foreach (explode(',', $dow) as $token) {
+                if (str_contains($token, '-')) {
+                    [$a, $b] = array_map('intval', explode('-', $token));
+                    for ($i = $a; $i <= $b; $i++) {
+                        $days[] = $i % 7;
+                    }
+                } else {
+                    $days[] = ((int)$token) % 7;
+                }
+            }
+            $days = array_unique($days);
+            sort($days);
+            $labels = array_map(fn($d) => self::WEEKDAYS_RU[$d], $days);
+            return 'По дням (' . implode(', ', $labels) . ") в {$time}";
+        }
+
+        if (!$dayIsAny && $monthIsAny && $dowIsAny) {
+            $days = array_map('trim', explode(',', $day));
+            return implode(', ', $days) . "-го числа в {$time}";
+        }
+
+        return "cron: {$cron}";
     }
 }

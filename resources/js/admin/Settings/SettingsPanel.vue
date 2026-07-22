@@ -643,6 +643,7 @@ const onceDateTime = ref('');
 const recentArticles = ref([]);
 const categories = ref([]);
 const categoriesLoading = ref(false);
+const scheduleLabel = ref('');
 
 const genForm = reactive({
     enabled: true,
@@ -734,8 +735,7 @@ const formatCronHuman = (cron) => {
 
 const nextRunLabel = computed(() => {
     if (!genForm.enabled) return '';
-    if (genForm.mode === 'once') return onceDateTime.value ? formatDateTime(onceDateTime.value) : '';
-    return formatCronHuman(genForm.cron);
+    return scheduleLabel.value;
 });
 
 const formatDateTime = (dateTime) => {
