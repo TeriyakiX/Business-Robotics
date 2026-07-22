@@ -187,8 +187,27 @@ export const settingsAPI = {
         });
     },
 
-    getSchedule: () => api.get('/admin/articles/schedule'),
-    updateSchedule: (data) => api.put('/admin/articles/schedule', data),
+    getSchedule: async () => {
+        const res = await fetch('/api/v1/admin/articles/schedule', {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            },
+        });
+        return res.json();
+    },
+    updateSchedule: async (data) => {
+        const res = await fetch('/api/v1/admin/articles/schedule', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            },
+            body: JSON.stringify(data),
+        });
+        return res.json();
+    },
 
     getGenerationSettings: () => api.get('/admin/articles/generation-settings'),
     saveGenerationSettings: (data) => api.post('/admin/articles/generation-settings', data),

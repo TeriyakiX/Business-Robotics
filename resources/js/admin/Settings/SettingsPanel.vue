@@ -516,7 +516,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue';
-import { settingsAPI } from '../../services/api';
+import { settingsAPI } from '../services/api.js';
 
 const activeTab = ref('hero');
 const saving = ref(false);
@@ -648,14 +648,13 @@ const genForm = reactive({
     enabled: true,
     mode: 'preset',
     preset: 'every_monday',
-    cron: '0 9 * * 1',
+    cron: '0 8 * * *',
     prompt: '',
     category_id: null,
 });
 
 const genPresets = {
-    every_monday: { label: 'Каждый понедельник в 9:00', cron: '0 9 * * 1' },
-    every_day: { label: 'Каждый день в 9:00', cron: '0 9 * * *' },
+    every_day: { label: 'Каждый день в 8:00', cron: '0 8 * * *' },
     twice_a_week: { label: 'Пн и Чт в 9:00', cron: '0 9 * * 1,4' },
     every_weekday: { label: 'По будням в 9:00', cron: '0 9 * * 1-5' },
     twice_a_month: { label: '1-го и 15-го в 9:00', cron: '0 9 1,15 * *' },

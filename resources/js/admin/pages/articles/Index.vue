@@ -139,7 +139,8 @@
                                 <line x1="8" y1="2" x2="8" y2="6"/>
                                 <line x1="3" y1="10" x2="21" y2="10"/>
                             </svg>
-                            Автогенерация: каждый понедельник в 09:00
+                            <span v-if="scheduleEnabled">Автогенерация: {{ scheduleLabel }}</span>
+                            <span v-else>Автогенерация отключена</span>
                         </div>
                     </div>
                 </div>
@@ -461,7 +462,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { articlesAPI, categoriesAPI } from '../../services/api';
+import { articlesAPI, categoriesAPI, settingsAPI } from '../../services/api';
 import QuillEditor from '../../components/QuillEditor.vue';
 
 const router = useRouter();
@@ -560,6 +561,19 @@ const toggleAiCategoryDropdown = () => {
     if (aiCategoryOpen.value) {
         aiCategorySearch.value = '';
         nextTick(() => aiCategorySearchInput.value?.focus());
+    }
+};
+
+const scheduleLabel = ref('');
+const scheduleEnabled = ref(true);
+
+const loadScheduleInfo = async () => {
+    try {
+        const s = await settingsAPI.getSchedule();
+        scheduleLabel.value = s.label ?? '';
+        scheduleEnabled.value = s.enabled ?? true;
+    } catch (e) {
+        console.error('Ошибка загрузки расписания:', e);
     }
 };
 
@@ -883,6 +897,7 @@ onMounted(() => {
     fetchItems();
     loadCategories();
     loadSavedPrompt();
+    loadScheduleInfo();
     document.addEventListener('mousedown', handleClickOutside);
 });
 
