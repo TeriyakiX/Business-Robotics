@@ -686,12 +686,56 @@ const statusLabel = computed(() => {
     return 'Автогенерация включена';
 });
 
+const WEEKDAYS_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+const formatCronHuman = (cron) => {
+    if (!cron || typeof cron !== 'string') return '';
+    const parts = cron.trim().split(/\s+/);
+    if (parts.length !== 5) return `cron: ${cron}`;
+
+    const [min, hour, day, month, dow] = parts;
+
+    // Время возможно только если минута и час — конкретные числа
+    const hasFixedTime = /^\d+$/.test(min) && /^\d+$/.test(hour);
+    if (!hasFixedTime) return `cron: ${cron}`;
+
+    const timeStr = `${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
+
+    const dayIsAny = day === '*';
+    const monthIsAny = month === '*';
+    const dowIsAny = dow === '*';
+
+    if (dayIsAny && monthIsAny && dowIsAny) {
+        return `Каждый день в ${timeStr}`;
+    }
+
+    if (dayIsAny && monthIsAny && !dowIsAny) {
+        const expandDow = (token) => {
+            if (token.includes('-')) {
+                const [a, b] = token.split('-').map(Number);
+                const res = [];
+                for (let i = a; i <= b; i++) res.push(i % 7);
+                return res;
+            }
+            return [Number(token) % 7];
+        };
+        const days = dow.split(',').flatMap(expandDow);
+        const uniqueDays = [...new Set(days)].sort();
+        const label = uniqueDays.map((d) => WEEKDAYS_RU[d]).join(', ');
+        return `По дням: ${label} в ${timeStr}`;
+    }
+
+    if (!dayIsAny && monthIsAny && dowIsAny) {
+        return `${day}-го числа в ${timeStr}`;
+    }
+
+    return `cron: ${cron}`;
+};
+
 const nextRunLabel = computed(() => {
     if (!genForm.enabled) return '';
     if (genForm.mode === 'once') return onceDateTime.value ? formatDateTime(onceDateTime.value) : '';
-    if (genForm.mode === 'preset') return genPresets[genForm.preset]?.label || '';
-    if (genForm.mode === 'custom') return `cron: ${genForm.cron}`;
-    return '';
+    return formatCronHuman(genForm.cron);
 });
 
 const formatDateTime = (dateTime) => {
