@@ -11,7 +11,6 @@ class ArticleScheduleSettingsSeeder extends Seeder
     {
         $now  = now();
 
-        // Проверяем, существует ли категория technology, если нет - создаем
         $category = DB::table('categories')->where('slug', 'technology')->first();
         if (!$category) {
             $categoryId = DB::table('categories')->insertGetId([

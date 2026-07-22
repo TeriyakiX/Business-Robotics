@@ -26,7 +26,7 @@ final class ArticleSeeder extends Seeder
             ],
             [
                 'title' => 'Голосовой бот для бизнеса: полное руководство по выбору и внедрению в 2025 году',
-                'category_slug' => 'ai_for_business', // Внимание: у тебя в CategorySeeder ai_for_business
+                'category_slug' => 'ai_for_business',
                 'description' => 'Чем отличаются голосовые боты от простых IVR, какие технологии лежат в основе и как выбрать решение под конкретный бизнес — подробный разбор.',
                 'reading_time' => 8,
                 'cover' => '2.avif',
