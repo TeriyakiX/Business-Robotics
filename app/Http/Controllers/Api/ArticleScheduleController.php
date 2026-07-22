@@ -19,7 +19,7 @@ final class ArticleScheduleController extends Controller
      *  - "custom"  — произвольное cron-выражение (повторяющееся)
      */
     private const PRESETS = [
-        'every_monday'  => ['cron' => '31 10 * * *',    'label' => 'Каждый понедельник в 10:31'],
+        'every_monday'  => ['cron' => '47 10 * * *',    'label' => 'Каждый понедельник в 10:47'],
         'every_day'     => ['cron' => '0 9 * * *',    'label' => 'Каждый день в 9:00'],
         'twice_a_week'  => ['cron' => '0 9 * * 1,4',  'label' => 'Пн и Чт в 9:00'],
         'every_weekday' => ['cron' => '0 9 * * 1-5',  'label' => 'По будням в 9:00'],
