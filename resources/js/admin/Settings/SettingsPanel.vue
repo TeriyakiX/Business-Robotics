@@ -481,8 +481,7 @@
                         </div>
                         <div class="cron-examples">
                             <span class="hint">Быстрый выбор:</span>
-                            <button type="button" class="cron-example" @click="genForm.cron = '0 9 * * 1'">Пн 9:00</button>
-                            <button type="button" class="cron-example" @click="genForm.cron = '0 9 * * *'">Каждый день 9:00</button>
+                            <button type="button" class="cron-example" @click="genForm.cron = '0 9 * * *'">Каждый день 8:00</button>
                             <button type="button" class="cron-example" @click="genForm.cron = '0 9 * * 6'">Сб 9:00</button>
                             <button type="button" class="cron-example" @click="genForm.cron = '55 13 * * 6'">Сб 13:55</button>
                         </div>
