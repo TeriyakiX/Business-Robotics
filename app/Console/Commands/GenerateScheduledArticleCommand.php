@@ -85,30 +85,28 @@ PROMPT;
                 return self::SUCCESS;
             }
 
-        } elseif ($mode === 'preset') {
-            $preset = $settings['article_schedule_preset'] ?? 'every_monday';
-            $presets = [
-                'every_monday'  => '0 9 * * 1',
-                'every_day'     => '0 9 * * *',
-                'twice_a_week'  => '0 9 * * 1,4',
-                'every_weekday' => '0 9 * * 1-5',
-                'twice_a_month' => '0 9 1,15 * *',
-                'every_month'   => '0 9 1 * *',
-            ];
-            $cron = $presets[$preset] ?? '0 9 * * 1';
-
-            if (CronExpression::factory($cron)->isDue($now)) {
-                $shouldRun = true;
-            } else {
-                return self::SUCCESS;
-            }
-
-        } elseif ($mode === 'custom') {
+        } elseif ($mode === 'preset' || $mode === 'custom') {
+            // ВАЖНО: и preset, и custom теперь читают ОДНО И ТО ЖЕ поле
+            // article_schedule_cron. Именно его пишет ArticleScheduleController
+            // при сохранении расписания — как для готовых пресетов, так и для
+            // произвольного cron-выражения. Раньше preset-режим брал cron из
+            // отдельного захардкоженного массива внутри этого файла, из-за чего
+            // правки cron через контроллер/UI для пресетов игнорировались.
             $cron = $settings['article_schedule_cron'] ?? '0 9 * * 1';
 
-            if (CronExpression::factory($cron)->isDue($now)) {
-                $shouldRun = true;
-            } else {
+            try {
+                $shouldRun = CronExpression::factory($cron)->isDue($now);
+            } catch (\Exception $e) {
+                $this->error("Invalid cron expression '{$cron}': " . $e->getMessage());
+                Log::error('GenerateScheduledArticleCommand: invalid cron expression', [
+                    'cron' => $cron,
+                    'mode' => $mode,
+                    'error' => $e->getMessage(),
+                ]);
+                return self::FAILURE;
+            }
+
+            if (!$shouldRun) {
                 return self::SUCCESS;
             }
         } else {

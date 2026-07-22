@@ -19,7 +19,7 @@ final class ArticleScheduleController extends Controller
      *  - "custom"  — произвольное cron-выражение (повторяющееся)
      */
     private const PRESETS = [
-        'every_monday'  => ['cron' => '08 10 * * *',    'label' => 'Каждый понедельник в 9:00'],
+        'every_monday'  => ['cron' => '31 10 * * *',    'label' => 'Каждый понедельник в 10:31'],
         'every_day'     => ['cron' => '0 9 * * *',    'label' => 'Каждый день в 9:00'],
         'twice_a_week'  => ['cron' => '0 9 * * 1,4',  'label' => 'Пн и Чт в 9:00'],
         'every_weekday' => ['cron' => '0 9 * * 1-5',  'label' => 'По будням в 9:00'],
@@ -145,7 +145,7 @@ final class ArticleScheduleController extends Controller
     {
         $validated = $request->validate([
             'prompt'       => 'nullable|string',
-            'category_id'  => 'nullable|integer|exists:categories,id', // требует integer
+            'category_id'  => 'nullable|integer|exists:categories,id',
             'category_slug' => 'nullable|string|exists:categories,slug',
         ]);
 
